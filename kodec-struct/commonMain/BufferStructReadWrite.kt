@@ -65,17 +65,17 @@ fun DataBuffer.getBackwards(structOffset: Int, field: BufferStructField<String>)
 // WRITE
 
 @JvmName("putBoolField")
-fun MutableDataBuffer.put(structOffset: Int, field: BufferStructField<Boolean>, value: Boolean) {
+fun OutputDataBuffer.put(structOffset: Int, field: BufferStructField<Boolean>, value: Boolean) {
     putBoolean(structOffset + field.offset, value)
 }
 
 @JvmName("putByteField")
-fun MutableDataBuffer.put(structOffset: Int, field: BufferStructField<Byte>, value: Byte) {
+fun OutputDataBuffer.put(structOffset: Int, field: BufferStructField<Byte>, value: Byte) {
     putInt8(structOffset + field.offset, value)
 }
 
 @JvmName("putShortField")
-fun MutableDataBuffer.put(structOffset: Int, field: BufferStructField<Short>, value: Short) {
+fun OutputDataBuffer.put(structOffset: Int, field: BufferStructField<Short>, value: Short) {
     if (field.size == 1) {
         set(structOffset + field.offset, value.toInt())
     } else {
@@ -84,17 +84,17 @@ fun MutableDataBuffer.put(structOffset: Int, field: BufferStructField<Short>, va
 }
 
 @JvmName("putIntField")
-fun MutableDataBuffer.put(structOffset: Int, field: BufferStructField<Int>, value: Int) {
+fun OutputDataBuffer.put(structOffset: Int, field: BufferStructField<Int>, value: Int) {
     putSizedInt32(structOffset + field.offset, sizeInBytes = field.size, value)
 }
 
 @JvmName("putLongField")
-fun MutableDataBuffer.put(structOffset: Int, field: BufferStructField<Long>, value: Long) {
+fun OutputDataBuffer.put(structOffset: Int, field: BufferStructField<Long>, value: Long) {
     putSizedInt64(structOffset + field.offset, sizeInBytes = field.size, value)
 }
 
 @JvmName("putStringField")
-fun MutableDataBuffer.put(structOffset: Int, field: BufferStructField<String>, value: String) {
+fun OutputDataBuffer.put(structOffset: Int, field: BufferStructField<String>, value: String) {
     require(value.length == field.size)
     assert { value.all { it.code <= 127 } }
     putStringAscii(structOffset + field.offset, value)
@@ -103,17 +103,17 @@ fun MutableDataBuffer.put(structOffset: Int, field: BufferStructField<String>, v
 // WRITE BACKWARD
 
 @JvmName("putBoolFieldBackwards")
-fun MutableDataBuffer.putBackwards(structOffset: Int, field: BufferStructField<Boolean>, value: Boolean) {
+fun OutputDataBuffer.putBackwards(structOffset: Int, field: BufferStructField<Boolean>, value: Boolean) {
     putBoolean(structOffset + field.backwardOffset, value)
 }
 
 @JvmName("putByteFieldBackwards")
-fun MutableDataBuffer.putBackwards(structOffset: Int, field: BufferStructField<Byte>, value: Byte) {
+fun OutputDataBuffer.putBackwards(structOffset: Int, field: BufferStructField<Byte>, value: Byte) {
     putInt8(structOffset + field.backwardOffset, value)
 }
 
 @JvmName("putShortFieldBackwards")
-fun MutableDataBuffer.putBackwards(structOffset: Int, field: BufferStructField<Short>, value: Short) {
+fun OutputDataBuffer.putBackwards(structOffset: Int, field: BufferStructField<Short>, value: Short) {
     if (field.size == 1) {
         set(structOffset + field.backwardOffset, value.toInt())
     } else {
@@ -122,17 +122,17 @@ fun MutableDataBuffer.putBackwards(structOffset: Int, field: BufferStructField<S
 }
 
 @JvmName("putIntFieldBackwards")
-fun MutableDataBuffer.putBackwards(structOffset: Int, field: BufferStructField<Int>, value: Int) {
+fun OutputDataBuffer.putBackwards(structOffset: Int, field: BufferStructField<Int>, value: Int) {
     putSizedInt32(structOffset + field.backwardOffset, sizeInBytes = field.size, value)
 }
 
 @JvmName("putLongFieldBackwards")
-fun MutableDataBuffer.putBackwards(structOffset: Int, field: BufferStructField<Long>, value: Long) {
+fun OutputDataBuffer.putBackwards(structOffset: Int, field: BufferStructField<Long>, value: Long) {
     putSizedInt64(structOffset + field.backwardOffset, sizeInBytes = field.size, value)
 }
 
 @JvmName("putStringFieldBackwards")
-fun MutableDataBuffer.putBackwards(structOffset: Int, field: BufferStructField<String>, value: String) {
+fun OutputDataBuffer.putBackwards(structOffset: Int, field: BufferStructField<String>, value: String) {
     require(value.length == field.size)
     assert { value.all { it.code <= 127 } }
     putStringAscii(structOffset + field.backwardOffset, value)

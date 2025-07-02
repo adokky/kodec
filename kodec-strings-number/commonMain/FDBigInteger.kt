@@ -1,6 +1,6 @@
 package io.kodec
 
-import io.kodec.buffers.MutableBuffer
+import io.kodec.buffers.OutputBuffer
 import karamel.utils.asInt
 import karamel.utils.assertionsEnabled
 import kotlin.math.max
@@ -1111,7 +1111,7 @@ internal class FDBigInteger {
 
 internal fun CharArray.copyAsciiInto(
     srcPos: Int,
-    dest: MutableBuffer,
+    dest: OutputBuffer,
     destPos: Int,
     length: Int
 ) {

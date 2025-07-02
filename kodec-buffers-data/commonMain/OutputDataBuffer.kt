@@ -6,7 +6,7 @@ import io.kodec.StringsUTF8
 import io.kodec.VariableEncoding
 import karamel.utils.asInt
 
-interface MutableDataBuffer: MutableBuffer {
+interface OutputDataBuffer: OutputBuffer {
     fun putInt8(pos: Int, v: Byte): Int {
         set(pos, v.asInt())
         return 1
@@ -90,4 +90,6 @@ interface MutableDataBuffer: MutableBuffer {
         return StringsASCII.write(str, strStart = strStart, strEnd = strEnd) { byte -> set(index++, byte) }
     }
 }
+
+interface MutableDataBuffer: DataBuffer, OutputDataBuffer, MutableBuffer
 

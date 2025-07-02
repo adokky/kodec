@@ -1,6 +1,6 @@
 package io.kodec
 
-import io.kodec.buffers.asBuffer
+import io.kodec.buffers.asArrayBuffer
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
@@ -54,7 +54,7 @@ open class StringToNumberTest {
             for (prefix in randomStrings)
             for (suffix in randomStrings) {
                 val decoded = FloatingDecimalParsing.readBuffer(
-                    "$prefix${expected}$suffix".encodeToByteArray().asBuffer(),
+                    "$prefix${expected}$suffix".encodeToByteArray().asArrayBuffer(),
                     start = prefix.length,
                     endExclusive = prefix.length + expected.length
                 ).floatValue()
@@ -71,7 +71,7 @@ open class StringToNumberTest {
             for (prefix in randomStrings)
             for (suffix in randomStrings) {
                 val decoded = FloatingDecimalParsing.readBuffer(
-                    "$prefix${expected}$suffix".encodeToByteArray().asBuffer(),
+                    "$prefix${expected}$suffix".encodeToByteArray().asArrayBuffer(),
                     start = prefix.length,
                     endExclusive = prefix.length + expected.length
                 ).doubleValue()

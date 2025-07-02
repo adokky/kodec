@@ -2,7 +2,7 @@ package io.kodec.text
 
 import io.kodec.StringHashCode
 import io.kodec.StringsUTF16
-import io.kodec.buffers.asBuffer
+import io.kodec.buffers.asArrayBuffer
 import karamel.utils.assertionsEnabled
 
 @Suppress("EqualsOrHashCode")
@@ -158,7 +158,7 @@ class RandomAccessTextReaderSubString(
 
     override fun copy(): AbstractSubString = when(val reader = reader) {
         is Utf8TextReader -> Utf8TextReader
-            .startReadingFrom(reader.buffer.toByteArray(start, end).asBuffer())
+            .startReadingFrom(reader.buffer.toByteArray(start, end).asArrayBuffer())
             .substring(0)
         is StringTextReader -> SimpleSubString(reader.input, start, end)
     }

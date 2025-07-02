@@ -1,12 +1,12 @@
 package io.kodec.buffers
 
-open class MutableDataBufferWrapperLE(internal val buffer: MutableBuffer): AbstractMutableDataBufferLE(), MutableBuffer by buffer
+open class OutputDataBufferWrapperLE(internal val buffer: OutputBuffer): AbstractOutputDataBufferLE(), OutputBuffer by buffer
 
-open class MutableDataBufferWrapperBE(internal val buffer: MutableBuffer): AbstractMutableDataBufferBE(), MutableBuffer by buffer
+open class OutputDataBufferWrapperBE(internal val buffer: OutputBuffer): AbstractOutputDataBufferBE(), OutputBuffer by buffer
 
-private fun MutableBuffer.unwrap(): MutableBuffer = when (this) {
-    is MutableDataBufferWrapperLE -> buffer.unwrap()
-    is MutableDataBufferWrapperBE -> buffer.unwrap()
+private fun OutputBuffer.unwrap(): OutputBuffer = when (this) {
+    is OutputDataBufferWrapperLE -> buffer.unwrap()
+    is OutputDataBufferWrapperBE -> buffer.unwrap()
     else -> this
 }
 
@@ -23,23 +23,23 @@ fun ArrayBuffer.asDataBuffer(
     ByteOrder.Native -> asDataBuffer(NativeByteOrder)
 }
 
-fun MutableBuffer.asDataBuffer(order: ByteOrder = ByteOrder.Native): MutableDataBuffer {
+fun OutputBuffer.asDataBuffer(order: ByteOrder = ByteOrder.Native): OutputDataBuffer {
     return when (order) {
         ByteOrder.BigEndian -> when (this) {
-            is AbstractMutableDataBufferBE -> this
+            is AbstractOutputDataBufferBE -> this
             is ArrayDataBufferSafeBE -> this
             is ArrayDataBufferUnsafeBE -> this
             is ArrayBuffer -> asDataBuffer(order)
-            else -> MutableDataBufferWrapperBE(unwrap())
+            else -> OutputDataBufferWrapperBE(unwrap())
         }
         ByteOrder.LittleEndian -> {
             // base ArrayDataBuffer is LE
-            if (this::class == ArrayDataBuffer::class) return this as MutableDataBuffer
+            if (this::class == ArrayDataBuffer::class) return this as OutputDataBuffer
             when (this) {
-                is AbstractMutableDataBufferLE -> this
+                is AbstractOutputDataBufferLE -> this
                 is ArrayDataBufferSafeLE -> this
                 is ArrayBuffer -> asDataBuffer(order)
-                else -> MutableDataBufferWrapperLE(unwrap())
+                else -> OutputDataBufferWrapperLE(unwrap())
             }
         }
         ByteOrder.Native -> asDataBuffer(NativeByteOrder)

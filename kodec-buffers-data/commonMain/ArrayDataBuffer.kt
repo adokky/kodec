@@ -9,7 +9,7 @@ open class ArrayDataBuffer internal constructor(
     array: ByteArray,
     start: Int = 0,
     endExclusive: Int = array.size
-): ArrayBuffer(array, start, endExclusive), MutableDataBuffer, DataBuffer {
+): ArrayBuffer(array, start, endExclusive), MutableDataBuffer {
     open val byteOrder: ByteOrder get() = ByteOrder.LittleEndian
 
     override fun getInt16(pos: Int): Short =

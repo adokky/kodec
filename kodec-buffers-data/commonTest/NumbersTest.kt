@@ -16,49 +16,49 @@ class NumbersTest: AbstractDataBufferTest() {
     fun int16() = test(
         NumbersDataSet::getInts16,
         DataBuffer::getInt16,
-        MutableDataBuffer::putInt16
+        OutputDataBuffer::putInt16
     )
 
     @Test
     fun int24() = test(
         NumbersDataSet::getInts24,
         DataBuffer::getInt24,
-        MutableDataBuffer::putInt24
+        OutputDataBuffer::putInt24
     )
 
     @Test
     fun int32() = test(
         NumbersDataSet::getInts32,
         DataBuffer::getInt32,
-        MutableDataBuffer::putInt32
+        OutputDataBuffer::putInt32
     )
 
     @Test
     fun int40() = test(
         NumbersDataSet::getInts40,
         DataBuffer::getInt40,
-        MutableDataBuffer::putInt40
+        OutputDataBuffer::putInt40
     )
 
     @Test
     fun int48() = test(
         NumbersDataSet::getInts48,
         DataBuffer::getInt48,
-        MutableDataBuffer::putInt48
+        OutputDataBuffer::putInt48
     )
 
     @Test
     fun int56() = test(
         NumbersDataSet::getInts56,
         DataBuffer::getInt56,
-        MutableDataBuffer::putInt56
+        OutputDataBuffer::putInt56
     )
 
     @Test
     fun int64() = test(
         NumbersDataSet::getInts64,
         DataBuffer::getInt64,
-        MutableDataBuffer::putInt64
+        OutputDataBuffer::putInt64
     )
 
     @Test

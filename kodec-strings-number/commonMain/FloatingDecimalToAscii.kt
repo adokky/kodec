@@ -1,7 +1,7 @@
 package io.kodec
 
 import io.kodec.buffers.ArrayBuffer
-import io.kodec.buffers.MutableBuffer
+import io.kodec.buffers.OutputBuffer
 import karamel.utils.ThreadLocal
 import kotlin.jvm.JvmStatic
 import kotlin.math.max
@@ -97,7 +97,7 @@ internal class FloatingDecimalToAscii private constructor() {
         }
     }
 
-    fun putDigits(f: Float, output: MutableBuffer, offset: Int): Int {
+    fun putDigits(f: Float, output: OutputBuffer, offset: Int): Int {
         prepare(f) { constResult ->
             for ((i, c) in constResult.withIndex()) output[offset + i] = c.code
             return constResult.size
@@ -105,7 +105,7 @@ internal class FloatingDecimalToAscii private constructor() {
         return getChars(output, offset)
     }
 
-    fun putDigits(d: Double, output: MutableBuffer, offset: Int): Int {
+    fun putDigits(d: Double, output: OutputBuffer, offset: Int): Int {
         prepare(d) { constResult ->
             for ((i, c) in constResult.withIndex()) output[offset + i] = c.code
             return constResult.size
@@ -622,7 +622,7 @@ internal class FloatingDecimalToAscii private constructor() {
         decimalDigitsRoundedUp = true
     }
 
-    private fun getChars(output: MutableBuffer, offset: Int = 0): Int {
+    private fun getChars(output: OutputBuffer, offset: Int = 0): Int {
         var i = offset
         getChars { char -> output[i++] = char }
         return i - offset

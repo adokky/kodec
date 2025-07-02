@@ -3,7 +3,7 @@ package io.kodec.buffers
 import io.kodec.NumbersBigEndian
 import io.kodec.NumbersLittleEndian
 
-abstract class AbstractMutableDataBufferLE: MutableDataBuffer {
+abstract class AbstractOutputDataBufferLE: OutputDataBuffer {
     override fun putInt16(pos: Int, v: Short): Int =
         NumbersLittleEndian.putInt16(v) { offset, byte -> set(pos + offset, byte) }
     override fun putInt24(pos: Int, v: Int): Int  =
@@ -20,7 +20,7 @@ abstract class AbstractMutableDataBufferLE: MutableDataBuffer {
         NumbersLittleEndian.putInt64(v) { offset, byte -> set(pos + offset, byte) }
 }
 
-abstract class AbstractMutableDataBufferBE: MutableDataBuffer {
+abstract class AbstractOutputDataBufferBE: OutputDataBuffer {
     override fun putInt16(pos: Int, v: Short): Int =
         NumbersBigEndian.putInt16(v) { offset, byte -> set(pos + offset, byte) }
     override fun putInt24(pos: Int, v: Int): Int  =

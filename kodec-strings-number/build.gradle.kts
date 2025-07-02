@@ -3,7 +3,7 @@ plugins {
     id("io.github.adokky.quick-publish")
 }
 
-version = "0.9"
+version = "0.9.1"
 
 dependencies {
     commonMainApi(project(":kodec-strings-common"))

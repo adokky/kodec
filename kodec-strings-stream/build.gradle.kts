@@ -3,7 +3,7 @@ plugins {
     id("io.github.adokky.quick-publish")
 }
 
-version = "0.7.2"
+version = "0.8"
 
 dependencies {
     commonMainApi(project(":kodec-buffers-core"))

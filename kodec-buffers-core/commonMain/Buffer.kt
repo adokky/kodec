@@ -12,8 +12,10 @@ interface Buffer {
     fun subBuffer(start: Int, endExclusive: Int): Buffer =
         SubBufferWrapper(this, start, endExclusive)
 
-    fun toByteArray(fromIndex: Int = 0, toIndex: Int = size): ByteArray =
-        ByteArray(toIndex - fromIndex) { i -> get(fromIndex + i).toByte() }
+    fun toByteArray(start: Int = 0, endExclusive: Int = size): ByteArray {
+        checkRange(start, endExclusive)
+        return ByteArray(endExclusive - start) { i -> get(start + i).toByte() }
+    }
 
     fun equalsRange(
         other: Buffer,
@@ -71,5 +73,14 @@ private fun Buffer.invalidEqualsRangeArgs(
     "invalid arguments: thisOffset=$thisOffset, otherOffset=$otherOffset, size=$size" +
     " (this.size=${this.size}, other.size=${data.size})"
 )
+
+internal fun Buffer.checkRange(start: Int, end: Int) {
+    if (start < 0 || end > size || start > end)
+        invalidRange(start, end)
+}
+
+private fun Buffer.invalidRange(start: Int, endExclusive: Int): Nothing {
+    throw IllegalArgumentException("invalid range: $start..<$endExclusive, size=$size")
+}
 
 val Buffer.indices: IntRange get() = 0 until size

@@ -2,7 +2,7 @@ package io.kodec.text
 
 import io.kodec.*
 import io.kodec.buffers.Buffer
-import io.kodec.buffers.asBuffer
+import io.kodec.buffers.asArrayBuffer
 import kotlin.jvm.JvmStatic
 
 open class Utf8TextReader(buffer: Buffer = Buffer.Empty): RandomAccessTextReader() {
@@ -72,4 +72,4 @@ fun Buffer.asUtf8Substring(): AbstractSubString {
 }
 
 fun String.asUtf8SubString(): AbstractSubString =
-    encodeToByteArray().asBuffer().asUtf8Substring()
+    encodeToByteArray().asArrayBuffer().asUtf8Substring()

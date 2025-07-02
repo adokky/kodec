@@ -1,6 +1,6 @@
 package io.kodec
 
-import io.kodec.buffers.asBuffer
+import io.kodec.buffers.asArrayBuffer
 import kotlin.jvm.JvmStatic
 
 internal object Float32Consts {
@@ -36,7 +36,7 @@ internal object Float32Consts {
     const val SIGNIF_BIT_MASK: Int = (1 shl (SIGNIFICAND_WIDTH - 1)) - 1
 
     const val INFINITY_REP = "Infinity"
-    @JvmStatic val INFINITY_REP_ARRAY = INFINITY_REP.encodeToByteArray().asBuffer()
+    @JvmStatic val INFINITY_REP_ARRAY = INFINITY_REP.encodeToByteArray().asArrayBuffer()
     const val INFINITY_LENGTH = INFINITY_REP.length
     const val NAN_REP = "NaN"
     const val NAN_LENGTH = NAN_REP.length

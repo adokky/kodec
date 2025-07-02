@@ -1,9 +1,9 @@
 package io.kodec.struct
 
-import io.kodec.buffers.MutableDataBuffer
+import io.kodec.buffers.OutputDataBuffer
 import kotlin.jvm.JvmName
 
-class BufferStructWriteContext(private val buffer: MutableDataBuffer, private val structOffset: Int) {
+class BufferStructWriteContext(private val buffer: OutputDataBuffer, private val structOffset: Int) {
     @JvmName("putBoolField")
     fun put(field: BufferStructField<Boolean>, value: Boolean): Unit = buffer.put(structOffset + field.offset, field, value)
     @JvmName("putByteField")
@@ -16,6 +16,6 @@ class BufferStructWriteContext(private val buffer: MutableDataBuffer, private va
     fun put(field: BufferStructField<Long>, value: Long): Unit = buffer.put(structOffset + field.offset, field, value)
 }
 
-inline fun <R> MutableDataBuffer.writeBufferStruct(structOffset: Int, body: BufferStructWriteContext.() -> R): R {
+inline fun <R> OutputDataBuffer.writeBufferStruct(structOffset: Int, body: BufferStructWriteContext.() -> R): R {
     return BufferStructWriteContext(this, structOffset).body()
 }

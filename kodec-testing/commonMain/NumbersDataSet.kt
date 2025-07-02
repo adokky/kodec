@@ -11,6 +11,8 @@ object NumbersDataSet {
 
     fun getInts16(): Sequence<Short> =
         sequenceOf(128, 129,
+            0x191, -0x191,
+            0xe13, -0xe13,
             Short.MAX_VALUE,
             Short.MIN_VALUE,
             (Short.MAX_VALUE - 1).toShort(),

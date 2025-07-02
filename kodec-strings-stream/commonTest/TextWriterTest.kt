@@ -3,7 +3,6 @@ package io.kodec.text
 import io.kodec.NumbersDataSet
 import io.kodec.StringsDataSet
 import io.kodec.buffers.ArrayDataBuffer
-import io.kodec.buffers.fill
 import io.kodec.buffers.getStringUtf8ByteSized
 import karamel.utils.enrichMessageOf
 import kotlin.test.Test

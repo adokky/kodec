@@ -63,6 +63,14 @@ open class ArrayBuffer(
 
     override fun getByte(pos: Int): Byte = array[start + pos]
 
+    override fun putBytes(pos: Int, bytes: Buffer, startIndex: Int, endIndex: Int) {
+        if (bytes is ArrayBuffer) {
+            putBytes(pos, bytes, startIndex, endIndex)
+        } else {
+            super.putBytes(pos, bytes, startIndex, endIndex)
+        }
+    }
+
     @JvmOverloads
     fun putBytes(pos: Int, bytes: ArrayBuffer, startIndex: Int = 0, endIndex: Int = bytes.size) {
         bytes.array.copyInto(this.array,
@@ -72,13 +80,17 @@ open class ArrayBuffer(
         )
     }
 
-    @JvmOverloads
-    fun clear(start: Int = 0, endExclusive: Int = size) {
+    override fun fill(byte: Int, start: Int, endExclusive: Int) {
         array.fill(0, fromIndex = this.start + start, toIndex = this.start + endExclusive)
     }
 
-    override fun toByteArray(fromIndex: Int, toIndex: Int): ByteArray =
-        array.copyOfRange(fromIndex = start + fromIndex, toIndex = endExclusive)
+    override fun toByteArray(start: Int, endExclusive: Int): ByteArray {
+        checkRange(start, endExclusive)
+        return array.copyOfRange(
+            fromIndex = this@ArrayBuffer.start + start,
+            toIndex = this@ArrayBuffer.start + endExclusive
+        )
+    }
 
     fun toByteArray(range: IntRange): ByteArray = toByteArray(range.first, range.last + 1)
 
@@ -161,7 +173,7 @@ open class ArrayBuffer(
         val isRangeChacksEnabled: Boolean get() = RANGE_CHECK_ENABLED
 
         @JvmField
-        val Empty: ArrayBuffer = emptyByteArray.asBuffer()
+        val Empty: ArrayBuffer = emptyByteArray.asArrayBuffer()
     }
 }
 
@@ -181,12 +193,12 @@ internal class ArrayBufferSafe(
 }
 
 fun ArrayBuffer(size: Int, rangeChecks: Boolean = RANGE_CHECK_ENABLED): ArrayBuffer =
-    ByteArray(size).asBuffer(
+    ByteArray(size).asArrayBuffer(
         endExclusive = size,
         rangeChecks = rangeChecks
     )
 
-fun ByteArray.asBuffer(
+fun ByteArray.asArrayBuffer(
     start: Int = 0,
     endExclusive: Int = this.size,
     rangeChecks: Boolean = RANGE_CHECK_ENABLED
@@ -195,4 +207,4 @@ fun ByteArray.asBuffer(
     else -> ArrayBuffer(this, start, endExclusive)
 }
 
-fun bufferOf(vararg bytes: Byte): ArrayBuffer = bytes.asBuffer()
+fun arrayBufferOf(vararg bytes: Byte): ArrayBuffer = bytes.asArrayBuffer()

@@ -20,7 +20,7 @@ fun DataBuffer.getSizedAsInt64(pos: Int, sizeInBytes: Int): Long = when(sizeInBy
     else -> wrongSizeInBytes(sizeInBytes, maxSize = 8)
 }
 
-fun MutableDataBuffer.putSizedInt32(pos: Int, sizeInBytes: Int, value: Int): Int {
+fun OutputDataBuffer.putSizedInt32(pos: Int, sizeInBytes: Int, value: Int): Int {
     when (sizeInBytes) {
         1 -> set(pos, value)
         2 -> putInt16(pos, value.toShort())
@@ -32,7 +32,7 @@ fun MutableDataBuffer.putSizedInt32(pos: Int, sizeInBytes: Int, value: Int): Int
     return sizeInBytes
 }
 
-fun MutableDataBuffer.putSizedInt64(pos: Int, sizeInBytes: Int, value: Long): Int {
+fun OutputDataBuffer.putSizedInt64(pos: Int, sizeInBytes: Int, value: Long): Int {
     when (sizeInBytes) {
         1 -> set(pos, value.toInt())
         2 -> putInt16(pos, value.toShort())

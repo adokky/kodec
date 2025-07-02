@@ -1,6 +1,6 @@
 package io.kodec
 
-import io.kodec.buffers.MutableBuffer
+import io.kodec.buffers.OutputBuffer
 import kotlin.jvm.JvmStatic
 
 object NumberToString {
@@ -36,12 +36,12 @@ object NumberToString {
 
     /** @return number of bytes written (number of characters) */
     @JvmStatic
-    fun putDigits(number: Float, output: MutableBuffer, offset: Int): Int =
+    fun putDigits(number: Float, output: OutputBuffer, offset: Int): Int =
         FloatingDecimalToAscii.getThreadLocalInstance().putDigits(number, output, offset)
 
     /** @return number of bytes written (number of characters) */
     @JvmStatic
-    fun putDigits(number: Double, output: MutableBuffer, offset: Int): Int =
+    fun putDigits(number: Double, output: OutputBuffer, offset: Int): Int =
         FloatingDecimalToAscii.getThreadLocalInstance().putDigits(number, output, offset)
 
     /** @return number of bytes written (number of characters) */
@@ -55,14 +55,14 @@ object NumberToString {
         FloatingDecimalToAscii.getThreadLocalInstance().writeDigits(number, writeByte)
 
     /** @return number of bytes written (number of digits) */
-    fun putDigits(number: Long, output: MutableBuffer, offset: Int): Int {
+    fun putDigits(number: Long, output: OutputBuffer, offset: Int): Int {
         val buffer = FloatingDecimalToAscii.getThreadLocalInstance().tempBuffer.array
         val charPos = prepareDigits(buffer, number)
         return writeBufferReversed(output, buffer, charPos, offset)
     }
 
     /** @return number of bytes written (number of digits) */
-    fun putDigits(number: Int, output: MutableBuffer, offset: Int): Int {
+    fun putDigits(number: Int, output: OutputBuffer, offset: Int): Int {
         val buffer = FloatingDecimalToAscii.getThreadLocalInstance().tempBuffer.array
         val charPos = prepareDigits(buffer, number)
         return writeBufferReversed(output, buffer, charPos, offset)
@@ -161,7 +161,7 @@ object NumberToString {
         return charPos
     }
 
-    private fun writeBufferReversed(dest: MutableBuffer, source: ByteArray, charPos: Int, destOffset: Int): Int {
+    private fun writeBufferReversed(dest: OutputBuffer, source: ByteArray, charPos: Int, destOffset: Int): Int {
         var pos = charPos
         while (pos < source.size) {
             dest[destOffset + (pos - charPos)] = source[pos]

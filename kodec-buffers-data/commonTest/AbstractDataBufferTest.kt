@@ -22,7 +22,7 @@ abstract class AbstractDataBufferTest {
     open fun <T> test(
         dataSet: () -> Sequence<T>,
         readData: DataBuffer.(offset: Int) -> T,
-        writeData: MutableDataBuffer.(offset: Int, T) -> Int,
+        writeData: OutputDataBuffer.(offset: Int, T) -> Int,
         onFail: FailHandler<T>? = null,
         maxFails: Int = 100,
     ) {
@@ -32,7 +32,7 @@ abstract class AbstractDataBufferTest {
 
     private fun <T> testEncoderDecoder(
         dataSet: () -> Sequence<T>,
-        writeData: MutableDataBuffer.(offset: Int, T) -> Int,
+        writeData: OutputDataBuffer.(offset: Int, T) -> Int,
         readData: DataBuffer.(offset: Int) -> T,
         onFail: FailHandler<T>?,
         maxFails: Int
@@ -96,7 +96,7 @@ abstract class AbstractDataBufferTest {
 
     private fun <T> testRangeChecks(
         dataSet: () -> Sequence<T>,
-        writeData: MutableDataBuffer.(offset: Int, T) -> Int,
+        writeData: OutputDataBuffer.(offset: Int, T) -> Int,
         onFail: FailHandler<T>?,
         maxFails: Int
     ) {
