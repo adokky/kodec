@@ -3,7 +3,7 @@ plugins {
     id("io.github.adokky.quick-publish")
 }
 
-version = "1.0"
+version = "1.1"
 
 dependencies {
     commonTestImplementation(project(":kodec-testing"))

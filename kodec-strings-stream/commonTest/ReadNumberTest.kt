@@ -72,7 +72,7 @@ class ReadNumberTest {
 
     @Test
     fun ints_happy_path() {
-        for (int in NumbersDataSet.getInts64()) {
+        for (int in NumbersDataSet.ints64) {
             checkInteger(int)
             checkInteger(int, "$int ")
             checkInteger(int, "$int:")
@@ -82,7 +82,7 @@ class ReadNumberTest {
 
     @Test
     fun float_happy_path() {
-        for (float in NumbersDataSet.getFloat64()) {
+        for (float in NumbersDataSet.floats64) {
             if (!float.isFinite()) continue
             checkFloat(float)
             checkFloat(float, "$float ")

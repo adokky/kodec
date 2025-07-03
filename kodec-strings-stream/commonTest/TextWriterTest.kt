@@ -45,7 +45,7 @@ class TextWriterTest {
     }
 
     @Test fun bytes() = testAllModes {
-        for (n in NumbersDataSet.getInts8()) {
+        for (n in NumbersDataSet.ints8) {
             writer.append(n)
             stringBuilder.append(n)
             checkAndClear()
@@ -53,7 +53,7 @@ class TextWriterTest {
     }
 
     @Test fun shorts() = testAllModes {
-        for (n in NumbersDataSet.getInts16()) {
+        for (n in NumbersDataSet.ints16) {
             writer.append(n)
             stringBuilder.append(n)
             checkAndClear()
@@ -61,7 +61,7 @@ class TextWriterTest {
     }
 
     @Test fun ints() = testAllModes {
-        for (n in NumbersDataSet.getInts32()) {
+        for (n in NumbersDataSet.ints32) {
             writer.append(n)
             stringBuilder.append(n)
             checkAndClear()
@@ -69,7 +69,7 @@ class TextWriterTest {
     }
 
     @Test fun longs() = testAllModes {
-        for (n in NumbersDataSet.getInts64()) {
+        for (n in NumbersDataSet.ints64) {
             writer.append(n)
             stringBuilder.append(n)
             checkAndClear()

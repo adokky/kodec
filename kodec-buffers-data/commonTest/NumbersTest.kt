@@ -7,56 +7,56 @@ import kotlin.test.assertTrue
 class NumbersTest: AbstractDataBufferTest() {
     @Test
     fun int8() = test(
-        NumbersDataSet::getInts8,
+        { NumbersDataSet.ints8.asSequence() },
         DataBuffer::getInt8,
         { pos, v -> putInt8(pos, v); 1 }
     )
 
     @Test
     fun int16() = test(
-        NumbersDataSet::getInts16,
+        { NumbersDataSet.ints16.asSequence() },
         DataBuffer::getInt16,
         OutputDataBuffer::putInt16
     )
 
     @Test
     fun int24() = test(
-        NumbersDataSet::getInts24,
+        { NumbersDataSet.ints24.asSequence() },
         DataBuffer::getInt24,
         OutputDataBuffer::putInt24
     )
 
     @Test
     fun int32() = test(
-        NumbersDataSet::getInts32,
+        { NumbersDataSet.ints32.asSequence() },
         DataBuffer::getInt32,
         OutputDataBuffer::putInt32
     )
 
     @Test
     fun int40() = test(
-        NumbersDataSet::getInts40,
+        { NumbersDataSet.ints40.asSequence() },
         DataBuffer::getInt40,
         OutputDataBuffer::putInt40
     )
 
     @Test
     fun int48() = test(
-        NumbersDataSet::getInts48,
+        { NumbersDataSet.ints48.asSequence() },
         DataBuffer::getInt48,
         OutputDataBuffer::putInt48
     )
 
     @Test
     fun int56() = test(
-        NumbersDataSet::getInts56,
+        { NumbersDataSet.ints56.asSequence() },
         DataBuffer::getInt56,
         OutputDataBuffer::putInt56
     )
 
     @Test
     fun int64() = test(
-        NumbersDataSet::getInts64,
+        { NumbersDataSet.ints64.asSequence() },
         DataBuffer::getInt64,
         OutputDataBuffer::putInt64
     )
@@ -75,7 +75,7 @@ class NumbersTest: AbstractDataBufferTest() {
 
     private fun varint32_test(optimizePositive: Boolean) {
         test(
-            NumbersDataSet::getInts32,
+            { NumbersDataSet.ints32.asSequence() },
             { pos ->
                 val (bytesRead, result) = getVarInt32(pos, optimizePositive)
                 assertTrue(bytesRead in 1..5)
@@ -87,7 +87,7 @@ class NumbersTest: AbstractDataBufferTest() {
 
     private fun varint64_test(optimizePositive: Boolean) {
         test(
-            NumbersDataSet::getInts64,
+            { NumbersDataSet.ints64.asSequence() },
             { pos ->
                 val (bytesRead, result) = getVarInt64(pos, optimizePositive)
                 assertTrue(bytesRead in 1..10)

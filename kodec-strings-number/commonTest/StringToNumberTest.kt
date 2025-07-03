@@ -21,7 +21,7 @@ open class StringToNumberTest {
             assertFloatEquals(expected.toFloat(), FloatingDecimalParsing.parseFloat(input))
         }
 
-        for (num in NumbersDataSet.getFloat32()) {
+        for (num in NumbersDataSet.floats32) {
             val decoded = FloatingDecimalParsing.parseFloat(num.toString())
             when {
                 num.isNaN() -> assertTrue(decoded.isNaN())
@@ -36,7 +36,7 @@ open class StringToNumberTest {
             assertFloatEquals(expected.toFloat(), FloatingDecimalParsing.parseFloat(input))
         }
 
-        for (num in NumbersDataSet.getFloat64()) {
+        for (num in NumbersDataSet.floats64) {
             val decoded = FloatingDecimalParsing.parseDouble(num.toString())
             when {
                 num.isNaN() -> assertTrue(decoded.isNaN())
@@ -49,7 +49,7 @@ open class StringToNumberTest {
 
     @Test
     fun floats_from_buffer_range() {
-        for (num in NumbersDataSet.getFloat32()) {
+        for (num in NumbersDataSet.floats32) {
             val expected = num.toString()
             for (prefix in randomStrings)
             for (suffix in randomStrings) {
@@ -66,7 +66,7 @@ open class StringToNumberTest {
 
     @Test
     fun doubles_from_buffer_range() {
-        for (num in NumbersDataSet.getFloat64()) {
+        for (num in NumbersDataSet.floats64) {
             val expected = num.toString()
             for (prefix in randomStrings)
             for (suffix in randomStrings) {

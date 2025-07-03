@@ -66,7 +66,7 @@ abstract class AbstractTextReaderTest {
         test("1e1", 10)
         test("78e3", 78000)
 
-        for (n in NumbersDataSet.getInts64()) {
+        for (n in NumbersDataSet.ints64) {
             test(n.toString(), n)
             test((-n).toString(), -n)
         }
@@ -114,7 +114,7 @@ abstract class AbstractTextReaderTest {
 
     @Test
     fun floats() {
-        for (n in NumbersDataSet.getFloat32().filter { it.isFinite() }) {
+        for (n in NumbersDataSet.floats32.filter { it.isFinite() }) {
             for (nStr in arrayOf(n.toString(), "$n ,", "${n}ё")) {
                 enrichMessageOf<Throwable>({ "failed on: '$nStr'" }) {
                     setText(nStr)
@@ -246,7 +246,7 @@ abstract class AbstractTextReaderTest {
 
     @Test
     fun doubles() {
-        for (n in NumbersDataSet.getFloat64().filter { it.isFinite() }) {
+        for (n in NumbersDataSet.floats64.filter { it.isFinite() }) {
             enrichMessageOf<Throwable>({ "failed on: $n" }) {
                 setText(n.toString())
                 assertNearlyEquals(n, reader.readDouble())

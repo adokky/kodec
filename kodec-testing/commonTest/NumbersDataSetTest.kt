@@ -1,81 +1,98 @@
 package io.kodec
 
 import kotlin.test.Test
+import kotlin.test.assertContains
 import kotlin.test.assertTrue
 
 class NumbersDataSetTest {
     @Test
     fun bytes() {
-        val generated = NumbersDataSet.getInts8().take(1000).toHashSet()
-        assertTrue(generated.containsAll(listOf(
-            Byte.MIN_VALUE,
-            Byte.MAX_VALUE,
-            0
-        )))
+        val generated = NumbersDataSet.ints8.toHashSet()
+        assertContains(generated, 0)
+        assertContains(generated, Byte.MIN_VALUE)
+        assertContains(generated, Byte.MAX_VALUE)
     }
 
     @Test
     fun shorts() {
-        val generated = NumbersDataSet.getInts16().take(1000).toHashSet()
-        assertTrue(generated.containsAll(listOf(
-            Short.MIN_VALUE,
-            Short.MAX_VALUE,
-            0
-        )))
+        val generated = NumbersDataSet.ints16.toHashSet()
+        assertContains(generated, 0)
+        assertContains(generated, Short.MIN_VALUE)
+        assertContains(generated, Short.MAX_VALUE)
     }
 
     @Test
     fun ints() {
-        val generated = NumbersDataSet.getInts32().take(1000).toHashSet()
-        assertTrue(generated.containsAll(listOf(
-            Int.MIN_VALUE,
-            Int.MAX_VALUE,
-            0
-        )))
+        val generated = NumbersDataSet.ints32.toHashSet()
+        assertContains(generated, 0)
+        assertContains(generated, Int.MIN_VALUE)
+        assertContains(generated, Int.MAX_VALUE)
     }
 
     @Test
     fun longs() {
-        val generated = NumbersDataSet.getInts64().take(1000).toHashSet()
-        assertTrue(generated.containsAll(listOf(
-            Long.MIN_VALUE,
-            Long.MAX_VALUE,
-            0L
-        )))
+        val generated = NumbersDataSet.ints64.toHashSet()
+        assertContains(generated, 0)
+        assertContains(generated, Long.MIN_VALUE)
+        assertContains(generated, Long.MAX_VALUE)
     }
 
     @Test
-    fun ints_24() {
-        val generated = NumbersDataSet.getInts24().take(1000).toHashSet()
-        assertTrue(generated.containsAll(listOf(0xFF_FF_FF, 0)))
+    fun uint_24() {
+        val generated = NumbersDataSet.uints24.toHashSet()
+        assertContains(generated, 0)
+        assertContains(generated, 0xFF_FF_FF)
+        assertTrue(generated.all { it >= 0 })
+    }
+
+    @Test
+    fun ulong_40() {
+        val generated = NumbersDataSet.uints40.toHashSet()
+        assertContains(generated, 0)
+        assertContains(generated, 0xFF_FF_FF_FF_FFL)
+        assertTrue(generated.all { it >= 0 })
+    }
+
+    @Test
+    fun ulong_48() {
+        val generated = NumbersDataSet.uints48.toHashSet()
+        assertContains(generated, 0)
+        assertContains(generated, 0xFF_FF_FF_FF_FFL)
+        assertContains(generated, 0xFF_FF_FF_FF_FF_FFL)
+        assertTrue(generated.all { it >= 0 })
+    }
+
+    @Test
+    fun ulong_56() {
+        val generated = NumbersDataSet.uints56.toHashSet()
+        assertContains(generated, 0)
+        assertContains(generated, 0xFF_FF_FF_FF_FFL)
+        assertContains(generated, 0xFF_FF_FF_FF_FF_FFL)
+        assertContains(generated, 0xFF_FF_FF_FF_FF_FF_FFL)
         assertTrue(generated.all { it >= 0 })
     }
 
     @Test
     fun floats() {
-        val generated = NumbersDataSet.getFloat32().take(1000).toHashSet()
+        val generated = NumbersDataSet.floats32.toHashSet()
         assertTrue(generated.size > 950)
-        assertTrue(generated.containsAll(listOf(
-            Float.MIN_VALUE,
-            Float.MAX_VALUE,
-            Float.POSITIVE_INFINITY,
-            Float.NEGATIVE_INFINITY,
-            Float.NaN,
-            0f
-        )))
+        assertContains(generated, Float.MIN_VALUE)
+        assertContains(generated, Float.MAX_VALUE)
+        assertContains(generated, Float.POSITIVE_INFINITY)
+        assertContains(generated, Float.NEGATIVE_INFINITY)
+        assertContains(generated, Float.NaN)
+        assertContains(generated, 0f)
     }
 
     @Test
     fun doubles() {
-        val generated = NumbersDataSet.getFloat64().take(1000).toHashSet()
+        val generated = NumbersDataSet.floats64.toHashSet()
         assertTrue(generated.size > 950)
-        assertTrue(generated.containsAll(listOf(
-            Double.MIN_VALUE,
-            Double.MAX_VALUE,
-            Double.POSITIVE_INFINITY,
-            Double.NEGATIVE_INFINITY,
-            Double.NaN,
-            0.0
-        )))
+        assertContains(generated, Double.MIN_VALUE)
+        assertContains(generated, Double.MAX_VALUE)
+        assertContains(generated, Double.POSITIVE_INFINITY)
+        assertContains(generated, Double.NEGATIVE_INFINITY)
+        assertContains(generated, Double.NaN)
+        assertContains(generated, 0.0)
     }
 }

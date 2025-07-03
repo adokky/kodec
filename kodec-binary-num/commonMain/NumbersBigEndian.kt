@@ -8,6 +8,12 @@ object NumbersBigEndian {
     }
 
     inline fun readInt24(readByte: () -> Int): Int {
+        return (readByte().toByte().toInt() shl 16
+            or (readByte() shl 8)
+            or (readByte()))
+    }
+
+    inline fun readUInt24(readByte: () -> Int): Int {
         return (readByte() shl 16
             or (readByte() shl 8)
             or (readByte()))
@@ -21,19 +27,40 @@ object NumbersBigEndian {
     }
 
     inline fun readInt40(readByte: () -> Int): Long {
+        return ((readByte().toByte().toLong() shl 32)
+                or (readByte().toLong() shl 24)
+                or (readInt24(readByte).toLong() and 0xFF_FF_FFL))
+    }
+
+    inline fun readUInt40(readByte: () -> Int): Long {
         return ((readByte().toLong() shl 32)
                 or (readByte().toLong() shl 24)
                 or (readInt24(readByte).toLong() and 0xFF_FF_FFL))
     }
 
     inline fun readInt48(readByte: () -> Int): Long {
-        return (readByte().toLong() shl 40
+        return (readByte().toByte().toLong() shl 40
             or (readByte().toLong() shl 32)
             or (readByte().toLong() shl 24)
             or (readInt24(readByte).toLong() and 0xFF_FF_FFL))
     }
 
+    inline fun readUInt48(readByte: () -> Int): Long {
+        return (readByte().toLong() shl 40
+                or (readByte().toLong() shl 32)
+                or (readByte().toLong() shl 24)
+                or (readInt24(readByte).toLong() and 0xFF_FF_FFL))
+    }
+
     inline fun readInt56(readByte: () -> Int): Long {
+        return ((readByte().toByte().toLong() shl 48)
+                or (readByte().toLong() shl 40)
+                or (readByte().toLong() shl 32)
+                or (readByte().toLong() shl 24)
+                or (readInt24(readByte).toLong() and 0xFF_FF_FFL))
+    }
+
+    inline fun readUInt56(readByte: () -> Int): Long {
         return ((readByte().toLong() shl 48)
                 or (readByte().toLong() shl 40)
                 or (readByte().toLong() shl 32)
@@ -63,11 +90,16 @@ object NumbersBigEndian {
         return 3
     }
 
+    inline fun writeInt24(v: Int, writeByte: (Int) -> Unit): Int {
+        NumbersCommon.checkInt24Range(v)
+        return writeInt24Unsafe(v, writeByte)
+    }
+
     /**
      * @param v *binary* representation of 24-bit unsigned integer in which all 8 left bits must be zero.
      */
-    inline fun writeInt24(v: Int, writeByte: (Int) -> Unit): Int {
-        require(v ushr 24 == 0) { "'writeInt24' accepts only Int in range 0..$INT_24_MAX" }
+    inline fun writeUInt24(v: Int, writeByte: (Int) -> Unit): Int {
+        NumbersCommon.checkUInt24Range(v)
         return writeInt24Unsafe(v, writeByte)
     }
 
@@ -88,11 +120,16 @@ object NumbersBigEndian {
         return 5
     }
 
-    /**
-     * @param v *binary* representation of 40-bit unsigned integer in which all 16 left bits must be zero.
-     */
     inline fun writeInt40(v: Long, writeByte: (Int) -> Unit): Int {
-        require(v ushr 40 == 0L) { "'writeInt40' accepts only Long in range 0..$INT_40_MAX" }
+        NumbersCommon.checkInt40Range(v)
+        return writeInt40Unsafe(v, writeByte)
+    }
+
+    /**
+     * @param v *binary* representation of 40-bit unsigned integer in which all 24 left bits must be zero.
+     */
+    inline fun writeUInt40(v: Long, writeByte: (Int) -> Unit): Int {
+        NumbersCommon.checkUInt40Range(v)
         return writeInt40Unsafe(v, writeByte)
     }
 
@@ -106,11 +143,16 @@ object NumbersBigEndian {
         return 6
     }
 
+    inline fun writeInt48(v: Long, writeByte: (Int) -> Unit): Int {
+        NumbersCommon.checkInt48Range(v)
+        return writeInt48Unsafe(v, writeByte)
+    }
+
     /**
      * @param v *binary* representation of 48-bit unsigned integer in which all 16 left bits must be zero.
      */
-    inline fun writeInt48(v: Long, writeByte: (Int) -> Unit): Int {
-        require(v ushr 48 == 0L) { "'writeInt48' accepts only Long in range 0..$INT_48_MAX" }
+    inline fun writeUInt48(v: Long, writeByte: (Int) -> Unit): Int {
+        NumbersCommon.checkUInt48Range(v)
         return writeInt48Unsafe(v, writeByte)
     }
 
@@ -125,11 +167,16 @@ object NumbersBigEndian {
         return 7
     }
 
-    /**
-     * @param v *binary* representation of 56-bit unsigned integer in which all 16 left bits must be zero.
-     */
     inline fun writeInt56(v: Long, writeByte: (Int) -> Unit): Int {
-        require(v ushr 56 == 0L) { "'writeInt56' accepts only Long in range 0..$INT_56_MAX" }
+        NumbersCommon.checkInt56Range(v)
+        return writeInt56Unsafe(v, writeByte)
+    }
+
+    /**
+     * @param v *binary* representation of 56-bit unsigned integer in which all 8 left bits must be zero.
+     */
+    inline fun writeUInt56(v: Long, writeByte: (Int) -> Unit): Int {
+        NumbersCommon.checkUInt56Range(v)
         return writeInt56Unsafe(v, writeByte)
     }
 
@@ -152,6 +199,12 @@ object NumbersBigEndian {
     }
 
     inline fun getInt24(getByte: (offset: Int) -> Int): Int {
+        return (getByte(0).toByte().toInt() shl 16
+            or (getByte(1) shl 8)
+            or (getByte(2)))
+    }
+
+    inline fun getUInt24(getByte: (offset: Int) -> Int): Int {
         return (getByte(0) shl 16
             or (getByte(1) shl 8)
             or (getByte(2)))
@@ -165,24 +218,45 @@ object NumbersBigEndian {
     }
 
     inline fun getInt40(getByte: (offset: Int) -> Int): Long {
+        return (getByte(0).toByte().toLong() shl 32
+            or (getByte(1).toLong() shl 24)
+            or (getInt24 { offset -> getByte(2 + offset) }.toLong() and NumbersCommon.UINT_24_MAX.toLong()))
+    }
+
+    inline fun getUInt40(getByte: (offset: Int) -> Int): Long {
         return (getByte(0).toLong() shl 32
             or (getByte(1).toLong() shl 24)
-            or (getInt24 { offset -> getByte(2 + offset) }.toLong() and INT_24_MAX.toLong()))
+            or (getInt24 { offset -> getByte(2 + offset) }.toLong() and NumbersCommon.UINT_24_MAX.toLong()))
     }
 
     inline fun getInt48(getByte: (offset: Int) -> Int): Long {
+        return (getByte(0).toByte().toLong() shl 40
+            or (getByte(1).toLong() shl 32)
+            or (getByte(2).toLong() shl 24)
+            or (getInt24 { offset -> getByte(3 + offset) }.toLong() and NumbersCommon.UINT_24_MAX.toLong()))
+    }
+
+    inline fun getUInt48(getByte: (offset: Int) -> Int): Long {
         return (getByte(0).toLong() shl 40
             or (getByte(1).toLong() shl 32)
             or (getByte(2).toLong() shl 24)
-            or (getInt24 { offset -> getByte(3 + offset) }.toLong() and INT_24_MAX.toLong()))
+            or (getInt24 { offset -> getByte(3 + offset) }.toLong() and NumbersCommon.UINT_24_MAX.toLong()))
     }
 
     inline fun getInt56(getByte: (offset: Int) -> Int): Long {
+        return ((getByte(0).toByte().toLong() shl 48)
+            or (getByte(1).toLong() shl 40)
+            or (getByte(2).toLong() shl 32)
+            or (getByte(3).toLong() shl 24)
+            or (getInt24 { offset -> getByte(4 + offset) }.toLong() and NumbersCommon.UINT_24_MAX.toLong()))
+    }
+
+    inline fun getUInt56(getByte: (offset: Int) -> Int): Long {
         return ((getByte(0).toLong() shl 48)
-                or (getByte(1).toLong() shl 40)
-                or (getByte(2).toLong() shl 32)
-                or (getByte(3).toLong() shl 24)
-                or (getInt24 { offset -> getByte(4 + offset) }.toLong() and INT_24_MAX.toLong()))
+            or (getByte(1).toLong() shl 40)
+            or (getByte(2).toLong() shl 32)
+            or (getByte(3).toLong() shl 24)
+            or (getInt24 { offset -> getByte(4 + offset) }.toLong() and NumbersCommon.UINT_24_MAX.toLong()))
     }
 
     inline fun getInt64(getByte: (offset: Int) -> Int): Long {
@@ -191,7 +265,7 @@ object NumbersBigEndian {
             or (getByte(2).toLong() shl 40)
             or (getByte(3).toLong() shl 32)
             or (getByte(4).toLong() shl 24)
-            or (getInt24 { offset -> getByte(5 + offset) }.toLong() and INT_24_MAX.toLong()))
+            or (getInt24 { offset -> getByte(5 + offset) }.toLong() and NumbersCommon.UINT_24_MAX.toLong()))
     }
 
     inline fun putInt16(v: Short, putByte: (pos: Int, value: Int) -> Unit): Int {
@@ -208,7 +282,12 @@ object NumbersBigEndian {
     }
 
     inline fun putInt24(v: Int, putByte: (pos: Int, value: Int) -> Unit): Int {
-        require(v ushr 24 == 0) { "'putInt24' accepts only Long in range 0..$INT_24_MAX" }
+        NumbersCommon.checkInt24Range(v)
+        return putInt24Unsafe(v, putByte)
+    }
+
+    inline fun putUInt24(v: Int, putByte: (pos: Int, value: Int) -> Unit): Int {
+        NumbersCommon.checkUInt24Range(v)
         return putInt24Unsafe(v, putByte)
     }
 
@@ -230,7 +309,12 @@ object NumbersBigEndian {
     }
 
     inline fun putInt40(v: Long, putByte: (pos: Int, value: Int) -> Unit): Int {
-        require(v ushr 40 == 0L) { "'putInt40' accepts only Long in range 0..$INT_40_MAX" }
+        NumbersCommon.checkInt40Range(v)
+        return putInt40Unsafe(v, putByte)
+    }
+
+    inline fun putUInt40(v: Long, putByte: (pos: Int, value: Int) -> Unit): Int {
+        NumbersCommon.checkUInt40Range(v)
         return putInt40Unsafe(v, putByte)
     }
 
@@ -245,7 +329,12 @@ object NumbersBigEndian {
     }
 
     inline fun putInt48(v: Long, putByte: (pos: Int, value: Int) -> Unit): Int {
-        require(v ushr 48 == 0L) { "'putInt48' accepts only Long in range 0..$INT_48_MAX" }
+        NumbersCommon.checkInt48Range(v)
+        return putInt48Unsafe(v, putByte)
+    }
+
+    inline fun putUInt48(v: Long, putByte: (pos: Int, value: Int) -> Unit): Int {
+        NumbersCommon.checkUInt48Range(v)
         return putInt48Unsafe(v, putByte)
     }
 
@@ -261,7 +350,12 @@ object NumbersBigEndian {
     }
 
     inline fun putInt56(v: Long, putByte: (pos: Int, value: Int) -> Unit): Int {
-        require(v ushr 56 == 0L) { "'putInt56' accepts only Long in range 0..$INT_56_MAX" }
+        NumbersCommon.checkInt56Range(v)
+        return putInt56Unsafe(v, putByte)
+    }
+
+    inline fun putUInt56(v: Long, putByte: (pos: Int, value: Int) -> Unit): Int {
+        NumbersCommon.checkUInt56Range(v)
         return putInt56Unsafe(v, putByte)
     }
 
@@ -276,9 +370,4 @@ object NumbersBigEndian {
         putByte(7, v.toInt())
         return 8
     }
-
-    const val INT_24_MAX: Int = 0.inv() ushr 8
-    const val INT_40_MAX: Long = 0L.inv() ushr 24
-    const val INT_48_MAX: Long = 0L.inv() ushr 16
-    const val INT_56_MAX: Long = 0L.inv() ushr 8
 }

@@ -11,7 +11,7 @@ class NumberToStringTest {
     @Test
     fun long() {
         val buf = ArrayBuffer(30)
-        for (num in NumbersDataSet.getInts64()) {
+        for (num in NumbersDataSet.ints64) {
             val length = NumberToString.putDigits(num, buf, 0)
             assertEquals(num, buf.getStringAscii(0, length).toLong())
         }
@@ -20,7 +20,7 @@ class NumberToStringTest {
     @Test
     fun int() {
         val buf = ArrayBuffer(30)
-        for (num in NumbersDataSet.getInts32()) {
+        for (num in NumbersDataSet.ints32) {
             val length = NumberToString.putDigits(num, buf, 0)
             assertEquals(num, buf.getStringAscii(0, length).toInt())
         }
@@ -29,7 +29,7 @@ class NumberToStringTest {
     @Test
     fun float() {
         val sb = StringBuilder()
-        for (num in NumbersDataSet.getFloat32()) {
+        for (num in NumbersDataSet.floats32) {
             val s = buildString(sb) { FloatingDecimalToAscii.getThreadLocalInstance().appendTo(num, this) }
             val decoded = try {
                 s.toFloat()
@@ -45,7 +45,7 @@ class NumberToStringTest {
     @Test
     fun double() {
         val sb = StringBuilder()
-        for (num in NumbersDataSet.getFloat64()) {
+        for (num in NumbersDataSet.floats64) {
             val s = buildString(sb) { FloatingDecimalToAscii.getThreadLocalInstance().appendTo(num, this) }
             val decoded = try {
                 s.toDouble()
