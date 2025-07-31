@@ -1,7 +1,7 @@
 package io.kodec.text
 
 import io.kodec.DecodingErrorHandler
-import io.kodec.ErrorMessageContainer
+import io.kodec.ErrorContainer
 import io.kodec.StringsASCII
 import karamel.utils.BitDescriptors
 import karamel.utils.Bits32
@@ -103,7 +103,7 @@ interface TextReader {
     /**
      * Temporary storage for error messages to avoid allocations. Free for use by everyone.
      */
-    val errorContainer: ErrorMessageContainer
+    val errorContainer: ErrorContainer<Any>
 
     companion object {
         @JvmStatic

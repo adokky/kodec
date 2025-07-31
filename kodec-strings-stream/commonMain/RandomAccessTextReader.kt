@@ -179,6 +179,6 @@ sealed class RandomAccessTextReader: TextReader {
         )
     }
 
-    final override val errorContainer: ErrorMessageContainer = ErrorMessageContainer()
+    final override val errorContainer: ErrorContainer<Any> = ErrorContainer()
 }
 

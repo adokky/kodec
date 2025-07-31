@@ -1,5 +1,6 @@
 package io.kodec
 
+import karamel.utils.unsafeCast
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmName
 
@@ -17,8 +18,8 @@ import kotlin.jvm.JvmName
  *          result = fallbackResult
  *      }
  *
- * If error is considered unrecoverable (or we simply do not
- * take care of performance), we can allocate the handler right
+ * If error is considered unrecoverable (or we simply does not
+ * care about performance), we can allocate the handler right
  * at the call site and throw an exception inside it:
  *
  *      reader.readUnsignedLong(pos,
@@ -45,45 +46,34 @@ fun interface DecodingErrorHandler<in T: Any> {
  *
  * Example:
  *
- *     val container = ErrorMessageContainer()
+ *     val container = ErrorContainer()
  *     val result = decodeSomething(onError = container.prepare())
  *     container.consumeError { cause ->
  *         // handle error
  *     }
- *     // or
- *     container.handle(DecodingError) {
- *         // only called if cause == DecodingError
- *     }
  */
-class ErrorMessageContainer: DecodingErrorHandler<Any>, AutoCloseable {
-    @PublishedApi internal var cause: Any? = null
+class ErrorContainer<E : Any>: DecodingErrorHandler<E>, AutoCloseable {
+    @PublishedApi internal var cause: E? = null
 
-    override fun invoke(cause: Any) {
+    override fun invoke(cause: E) {
         this.cause = cause
     }
 
-    fun prepare(): DecodingErrorHandler<Any> {
+    fun <E : Any> prepare(): ErrorContainer<E> {
         close()
-        return this
+        return this.unsafeCast()
     }
 
-    fun consumeError(): Any? = cause?.also { cause = null }
+    fun consumeError(): E? = cause?.also { close() }
 
     override fun close() { cause = null }
 
     fun isEmpty(): Boolean = cause == null
 
-    inline fun consumeError(body: (Any) -> Unit) {
+    inline fun consumeError(body: (E) -> Unit) {
         cause?.let {
             cause = null
             body(it)
-        }
-    }
-
-    inline fun handle(cause: Any, handler: () -> Unit) {
-        if (this.cause == cause) {
-            this.cause = null
-            handler()
         }
     }
 }
