@@ -4,11 +4,14 @@ import io.kodec.NumbersDataSet
 import karamel.utils.Bits32
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 import kotlin.test.fail
 
 class ReadNumberTest {
     private val reader = StringTextReader.Empty
+    private val result = ReadNumberResult()
 
     private fun checkFails(
         input: String,
@@ -25,6 +28,19 @@ class ReadNumberTest {
             terminatorClass = terminationClasses
         )
         assertEquals(expected, failure, input)
+
+        reader.startReadingFrom(input)
+        val errorContainer = reader.errorContainer.prepare<NumberParsingError>()
+        reader.readNumber(
+            result.clear(),
+            onFail = errorContainer,
+            charClasses = DefaultCharClasses.mapper,
+            terminatorClass = terminationClasses
+        )
+        assertEquals(expected, errorContainer.consumeError(), input)
+        assertEquals(0.0, result.asDouble)
+        assertEquals(0, result.asLong)
+        assertFalse(result.isDouble)
     }
 
     private fun checkInteger(
@@ -33,14 +49,21 @@ class ReadNumberTest {
         terminationClasses: Bits32<DefaultCharClasses> = DefaultCharClasses.WORD_TERM
     ) {
         reader.startReadingFrom(input)
-        var result: Long? = null
+        var long: Long? = null
         reader.readNumberTemplate(
-            acceptInt = { result = it },
+            acceptInt = { long = it },
             acceptFloat = { fail("expected acceptInt() but called acceptFloat() for '$input'") },
             charClasses = DefaultCharClasses.mapper,
             terminatorClass = terminationClasses
         )
-        assertEquals(expected, result, input)
+        assertEquals(expected, long, input)
+
+        reader.startReadingFrom(input)
+        result.clear()
+        reader.readNumber(result, DefaultCharClasses.mapper, terminationClasses)
+        assertEquals(0.0, result.asDouble)
+        assertEquals(expected, result.asLong)
+        assertFalse(result.isDouble)
     }
 
     private fun checkFloat(
@@ -50,24 +73,31 @@ class ReadNumberTest {
         terminationClasses: Bits32<DefaultCharClasses> = DefaultCharClasses.WORD_TERM
     ) {
         reader.startReadingFrom(input)
-        var result: Double? = null
+        var double: Double? = null
         reader.readNumberTemplate(
             acceptInt = { fail("expected acceptFloat() but called acceptInt() for '$input'") },
-            acceptFloat = { result = it },
+            acceptFloat = { double = it },
             allowSpecialFp = allowSpecial,
             charClasses = DefaultCharClasses.mapper,
             terminatorClass = terminationClasses
         )
-        assertNotNull(result)
+        assertNotNull(double)
         if (expected.isNaN()) {
-            if (!result.isNaN()) {
-                fail("input='$input'\nexpected NaN\ndecoded=$result")
+            if (!double.isNaN()) {
+                fail("input='$input'\nexpected NaN\ndecoded=$double")
             }
         } else {
-            if (expected !in (result - 0.0001 .. result + 0.0001)) {
-                fail("input='$input'\nexpected=$expected\ndecoded=$result")
+            if (expected !in (double - 0.0001 .. double + 0.0001)) {
+                fail("input='$input'\nexpected=$expected\ndecoded=$double")
             }
         }
+
+        reader.startReadingFrom(input)
+        result.clear()
+        reader.readNumber(result, DefaultCharClasses.mapper, terminationClasses, allowSpecialFp = allowSpecial)
+        assertEquals(double, result.asDouble)
+        assertEquals(0, result.asLong)
+        assertTrue(result.isDouble)
     }
 
     @Test
@@ -101,12 +131,13 @@ class ReadNumberTest {
             "", " ", "-", "-.", ".", "1..", ".0.", "1z", "Z", "abc", "334-", "1.0z", "e", "0.e", "e.", "e.1", "1e3.e1", "1ez", "1e2z",
         ).forEach { checkFails(it, NumberParsingError.MalformedNumber) }
 
-        arrayOf(
+        val array = arrayOf(
             "-9223372036854775809L", //  Long.MIN_VALUE - 1
             (Long.MAX_VALUE.toULong() + 1uL).toString(),
             ULong.MAX_VALUE.toString(),
             "100000000000000000000",
-        ).forEach { checkFails(it, NumberParsingError.IntegerOverflow) }
+        )
+        array.forEach { checkFails(it, NumberParsingError.IntegerOverflow) }
 
         checkFails("100000000000000000000.0", NumberParsingError.FloatOverflow)
 

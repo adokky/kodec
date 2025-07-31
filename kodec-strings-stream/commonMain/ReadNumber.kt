@@ -1,5 +1,6 @@
 package io.kodec.text
 
+import io.kodec.DecodingErrorHandler
 import io.kodec.DecodingErrorWithMessage
 import io.kodec.StringsASCII
 import karamel.utils.BitDescriptors
@@ -76,9 +77,14 @@ inline fun <BDS: BitDescriptors> RandomAccessTextReader.readNumberTemplate(
         
         if (nextCodePoint or StringsASCII.LOWER_CASE_BIT == 'e'.code) {
             readCodePoint()
-            accumulator = readLongExponent(accumulator, charClasses, terminatorClass, onFormatError = errorContainer.prepare())
-            errorContainer.handle(IntegerParsingError.MalformedNumber) { onFail(NumberParsingError.MalformedNumber); return }
-            errorContainer.handle(IntegerParsingError.Overflow) { onFail(NumberParsingError.IntegerOverflow); return }
+            val container = errorContainer.prepare<IntegerParsingError>()
+            accumulator = readLongExponent(accumulator, charClasses, terminatorClass, onFormatError = container)
+            container.consumeError { err ->
+                when(err) {
+                    IntegerParsingError.MalformedNumber -> { onFail(NumberParsingError.MalformedNumber); return }
+                    IntegerParsingError.Overflow -> { onFail(NumberParsingError.IntegerOverflow); return }
+                }
+            }
         }
 
         if (!charClasses.hasClass(nextCodePoint, terminatorClass)) {
@@ -92,6 +98,71 @@ inline fun <BDS: BitDescriptors> RandomAccessTextReader.readNumberTemplate(
             else -> { onFail(NumberParsingError.IntegerOverflow); return }
         })
     }
+}
+
+class ReadNumberResult {
+    var asDouble: Double = 0.0
+        private set
+    var asLong: Long = 0
+        private set
+    var isDouble: Boolean = false
+        private set
+
+    fun set(double: Double) {
+        asDouble = double
+        isDouble = true
+    }
+
+    fun set(long: Long) {
+        asLong = long
+        isDouble = false
+    }
+
+    fun clear(): ReadNumberResult {
+        asLong = 0
+        asDouble = 0.0
+        isDouble = false
+        return this
+    }
+
+    override fun toString(): String {
+        return (if (isDouble) asDouble else asLong).toString()
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is ReadNumberResult) return false
+
+        if (asDouble != other.asDouble) return false
+        if (asLong != other.asLong) return false
+        if (isDouble != other.isDouble) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = asDouble.hashCode()
+        result = 31 * result + asLong.hashCode()
+        result = 31 * result + isDouble.hashCode()
+        return result
+    }
+}
+
+fun <BDS: BitDescriptors> RandomAccessTextReader.readNumber(
+    result: ReadNumberResult,
+    charClasses: CharToClassMapper<BDS>,
+    terminatorClass: Bits32<BDS>,
+    onFail: DecodingErrorHandler<NumberParsingError> = fail,
+    allowSpecialFp: Boolean = false
+) {
+    readNumberTemplate(
+        acceptInt = { result.set(it) },
+        acceptFloat = { result.set(it) },
+        charClasses = charClasses,
+        terminatorClass = terminatorClass,
+        onFail = { onFail(it) },
+        allowSpecialFp = allowSpecialFp
+    )
 }
 
 @PublishedApi
