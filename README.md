@@ -6,9 +6,9 @@ Collection of binary and text processing primitives with focus on high performan
 
 Why not [okio](https://github.com/square/okio) / [kotlinx-io](https://github.com/Kotlin/kotlinx-io)?
 
-Because both of them don't provide a zero-copy array-like abstraction that allows you to wrap anything other than `ByteArray`.
+Because both of them does not provide a zero-copy array-like abstraction that allows you to wrap anything other than `ByteArray`.
 
-There are other notable differences:
+Other notable differences:
 * allocation-free `Float`/`Double` encoding/decoding
 * `TextReader` abstraction allows you to implement allocation-free decoding for any text format
 * "template" modules for decoding basic primitives with zero performance impact. Compatible with any data structure.
@@ -18,7 +18,7 @@ There are other notable differences:
 
 ### `kodec-buffers-core`
 
-![Maven Central Version](https://img.shields.io/maven-central/v/io.github.adokky/kodec-buffers-core)
+[![Maven Central Version](https://img.shields.io/maven-central/v/io.github.adokky/kodec-buffers-core)](https://mvnrepository.com/artifact/io.github.adokky/kodec-buffers-core)
 [![javadoc](https://javadoc.io/badge2/io.github.adokky/kodec-buffers-core/javadoc.svg)](https://javadoc.io/doc/io.github.adokky/kodec-buffers-core)
 
 Simple array-like structure implementation.
@@ -29,22 +29,22 @@ The module is compact and intended to be used as a basic memory IO integration l
 
 ### `kodec-buffers-data`
 
-![Maven Central Version](https://img.shields.io/maven-central/v/io.github.adokky/kodec-buffers-data)
+[![Maven Central Version](https://img.shields.io/maven-central/v/io.github.adokky/kodec-buffers-data)](https://mvnrepository.com/artifact/io.github.adokky/kodec-buffers-data)
 [![javadoc](https://javadoc.io/badge2/io.github.adokky/kodec-buffers-data/javadoc.svg)](https://javadoc.io/doc/io.github.adokky/kodec-buffers-data)
 
 `kodec-buffers-core` extensions for encoding/decoding strings and numbers.
 
 ### `kodec-strings-stream`
 
-![Maven Central Version](https://img.shields.io/maven-central/v/io.github.adokky/kodec-strings-stream)
+[![Maven Central Version](https://img.shields.io/maven-central/v/io.github.adokky/kodec-strings-stream)](https://mvnrepository.com/artifact/io.github.adokky/kodec-strings-stream)
 [![javadoc](https://javadoc.io/badge2/io.github.adokky/kodec-strings-stream/javadoc.svg)](https://javadoc.io/doc/io.github.adokky/kodec-strings-stream)
 
-* `TextReader` - streaming decoder for strings, numbers, characters. Supported sources: `Buffer`, `String`.
+* `TextReader` - streaming decoder for strings, numbers, characters. Supported inputs: `Buffer`, `String`.
 * `TextWriter` - streaming encoder for strings, chars, numbers. Supported outputs: `MutableBuffer`, `StringBuilder`.
 
 ### `kodec-strings-number`
 
-![Maven Central Version](https://img.shields.io/maven-central/v/io.github.adokky/kodec-strings-number)
+[![Maven Central Version](https://img.shields.io/maven-central/v/io.github.adokky/kodec-strings-number)](https://mvnrepository.com/artifact/io.github.adokky/kodec-strings-number)
 [![javadoc](https://javadoc.io/badge2/io.github.adokky/kodec-strings-number/javadoc.svg)](https://javadoc.io/doc/io.github.adokky/kodec-strings-number)
 
 Convert numbers to string and back (for both stream and random access structures).
@@ -53,7 +53,7 @@ Convert numbers to string and back (for both stream and random access structures
 
 ### `kodec-struct` (experimental)
 
-![Maven Central Version](https://img.shields.io/maven-central/v/io.github.adokky/kodec-struct)
+[![Maven Central Version](https://img.shields.io/maven-central/v/io.github.adokky/kodec-struct)](https://mvnrepository.com/artifact/io.github.adokky/kodec-struct)
 [![javadoc](https://javadoc.io/badge2/io.github.adokky/kodec-struct/javadoc.svg)](https://javadoc.io/doc/io.github.adokky/kodec-struct)
 
 Type-safe way to encode/decode flat binary structures.
@@ -65,21 +65,21 @@ Template module does not depend on anything and can be applied to any byte strea
 
 ### `kodec-binary-num`
 
-![Maven Central Version](https://img.shields.io/maven-central/v/io.github.adokky/kodec-binary-num)
+[![Maven Central Version](https://img.shields.io/maven-central/v/io.github.adokky/kodec-binary-num)](https://mvnrepository.com/artifact/io.github.adokky/kodec-binary-num)
 [![javadoc](https://javadoc.io/badge2/io.github.adokky/kodec-binary-num/javadoc.svg)](https://javadoc.io/doc/io.github.adokky/kodec-binary-num)
 
 Templates for binary encoding/decoding of numbers in plain BE/LE and variable-length format
 
 ### `kodec-strings-common`
 
-![Maven Central Version](https://img.shields.io/maven-central/v/io.github.adokky/kodec-strings-common)
+[![Maven Central Version](https://img.shields.io/maven-central/v/io.github.adokky/kodec-strings-common)](https://mvnrepository.com/artifact/io.github.adokky/kodec-strings-common)
 [![javadoc](https://javadoc.io/badge2/io.github.adokky/kodec-strings-common/javadoc.svg)](https://javadoc.io/doc/io.github.adokky/kodec-strings-common)
 
 A tiny module with common string encoding utilities
 
 ### `kodec-strings-utf`
 
-![Maven Central Version](https://img.shields.io/maven-central/v/io.github.adokky/kodec-strings-utf)
+[![Maven Central Version](https://img.shields.io/maven-central/v/io.github.adokky/kodec-strings-utf)](https://mvnrepository.com/artifact/io.github.adokky/kodec-strings-utf)
 [![javadoc](https://javadoc.io/badge2/io.github.adokky/kodec-strings-utf/javadoc.svg)](https://javadoc.io/doc/io.github.adokky/kodec-strings-utf)
 
 Templates for encoding/decoding UTF-8 strings
