@@ -32,18 +32,11 @@ sealed class RandomAccessTextReader: TextReader {
 
     abstract fun parseFloat(start: Int, end: Int, onFormatError: DecodingErrorHandler<String> = fail): ASCIIToBinaryConverter
 
-    /**
-     * Unsafe and performant function assuming next code point is in ASCII range.
-     *
-     * If next code point is *not* in ASCII range then
-     * result will be *any* number *not* in ASCII range (even negative).
-     *
-     * [fixNextCodePoint] can be used to re-read current code point with normal [readCodePoint].
-     */
+    /** @see [TextReader.readAsciiCode] */
     abstract fun readAsciiCode(position: Int): Int
 
     /**
-     * Intended to use with [readAsciiCode] on mixed (ASCII / non-ASCII) sequences.
+     * Allows to recover this reader from broken state after reading non-ASCII code with [readAsciiCode]
      */
     fun fixNextCodePoint() {
         if (nextCodePoint and 0x7f.inv() != 0) {
