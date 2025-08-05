@@ -152,7 +152,7 @@ fun DataBuffer.getStringUtf8ByteSized(pos: Int, byteLength: Int): String {
 
     readFromByteStream(
         readByte = { if (offset < end) get(offset++) else -1 },
-        appendChar = { sb.append(it) }
+        acceptChar = { sb.append(it) }
     )
 
     return sb.toString()

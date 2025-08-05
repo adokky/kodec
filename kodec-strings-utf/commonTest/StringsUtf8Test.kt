@@ -13,7 +13,7 @@ class StringsUtf8Test: StringsTestBase() {
                 var pos = 0
                 StringsUTF8.readFromByteStream(
                     readByte = { if (pos < bytes.size) bytes[pos++].asInt() else -1 },
-                    appendChar = { append(it) }
+                    acceptChar = { append(it) }
                 )
             }
             assertEquals(expected, got)
@@ -38,7 +38,7 @@ class StringsUtf8Test: StringsTestBase() {
     fun invalid_sequence_decoding() {
         val placeholder = "${StringsASCII.INVALID_BYTE_PLACEHOLDER}"
 
-        val encodedValid =  StringsDataSet.singleSurrogatePair.encodeToByteArray()
+        val encodedValid = StringsDataSet.singleSurrogatePair.encodeToByteArray()
 
         assertEquals(StringsDataSet.singleSurrogatePair, decode(encodedValid))
         assertEquals(StringsDataSet.singleSurrogatePair, decodeStreamed(encodedValid))

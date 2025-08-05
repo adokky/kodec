@@ -228,7 +228,7 @@ object StringsUTF8 {
 
         readFromByteStream(
             readByte = { if (i >= destEnd) -1 else readByte() },
-            appendChar = { dest[i++] = it }
+            acceptChar = { dest[i++] = it }
         )
     }
 
@@ -296,22 +296,22 @@ object StringsUTF8 {
 
     inline fun readCharUnsafe(
         firstByte: Int,
-        readByte: () -> Int,
+        secondByte: () -> Int,
         acceptSingle: (Char) -> Unit,
         acceptSurrogate: (highSurrogate: Char, lowSurrogate: Char) -> Unit
     ) {
         if (firstByte < 128) {
             acceptSingle(firstByte.toChar())
         } else if (firstByte.is_header_2_bytes()) {
-            acceptSingle(char(firstByte, readByte()))
+            acceptSingle(char(firstByte, secondByte()))
         } else if (firstByte.is_header_3_bytes()) {
-            val b1 = readByte()
-            val b2 = readByte()
+            val b1 = secondByte()
+            val b2 = secondByte()
             acceptSingle(char(firstByte, b1, b2))
         } else if (firstByte.is_header_4_bytes()) {
-            val b1 = readByte()
-            val b2 = readByte()
-            val b3 = readByte()
+            val b1 = secondByte()
+            val b2 = secondByte()
+            val b3 = secondByte()
             val codePoint = codePoint(firstByte, b1, b2, b3)
             acceptSurrogate(
                 StringsUTF16.highSurrogate(codePoint),
@@ -333,74 +333,55 @@ object StringsUTF8 {
     }
 
     /**
-     * @param readByte must return unsigned value of next byte or -1 there are no any data available.
+     * Do not forget, this is an inline function -
+     * you can freely use non-local return to stop reading at any moment.
+     *
+     * @param readByte must return an unsigned value of next byte or -1 there are no any data available.
+     * Beware, [readByte] is inlined 3 times, so it needs to be as compact as possible.
+     * @param acceptChar should accept next character of the result string. Inlined 2 times.
      */
     inline fun readFromByteStream(
         readByte: () -> Int,
-        appendChar: (Char) -> Unit
+        acceptChar: (Char) -> Unit
     ) {
-        var firstByte = readByte()
+        var byte = readByte()
 
         // fast path: ASCII-only sequences
-        while (firstByte < 128) {
-            if (firstByte < 0) return // EOF
-            appendChar(firstByte.toChar())
-            firstByte = readByte()
+        while (byte < 128) {
+            if (byte < 0) return // EOF
+            acceptChar(byte.toChar())
+            byte = readByte()
         }
 
         // slow path: capable to handle non-ASCII
-        run {
-            while (firstByte >= 0) {
+        while (byte >= 0) {
+            var c1 = 0
+            var c2 = -1
+
+            run {
                 readCharUnsafe(
-                    firstByte = firstByte,
-                    readByte = { readByte().also { if (it < 0) return@run } },
-                    acceptSingle = appendChar,
-                    acceptSurrogate = { hs, ls ->
-                        appendChar(hs)
-                        appendChar(ls)
-                    }
-                )
-                firstByte = readByte()
-            }
-            return
-        }
-
-        appendChar(INVALID_BYTE_PLACEHOLDER)
-    }
-
-    inline fun readFromByteStreamUntil(
-        readByte: () -> Int,
-        appendChar: (Char) -> Boolean
-    ) {
-        var firstByte = readByte()
-
-        // fast path: ASCII-only sequences
-        while (firstByte < 128) {
-            if (firstByte < 0) return // EOF
-            if (!appendChar(firstByte.toChar())) return
-            firstByte = readByte()
-        }
-
-        // slow path: capable to handle non-ASCII
-        run {
-            while (firstByte >= 0) {
-                readCharUnsafe(
-                    firstByte = firstByte,
-                    readByte = { readByte().also { if (it < 0) return@run } },
-                    acceptSingle = { c ->
-                        if (!appendChar(c)) return
+                    firstByte = byte,
+                    secondByte = {
+                        readByte().also {
+                            if (it < 0) {
+                                c1 = INVALID_BYTE_PLACEHOLDER.code
+                                return@run
+                            }
+                        }
                     },
-                    acceptSurrogate = { hs, ls ->
-                        if (!appendChar(hs)) return
-                        if (!appendChar(ls)) return
-                    }
+                    acceptSingle = { c -> c1 = c.code },
+                    acceptSurrogate = { hs, ls -> c1 = hs.code; c2 = ls.code }
                 )
-
-                firstByte = readByte()
             }
-        }
 
-        appendChar(INVALID_BYTE_PLACEHOLDER)
+            do {
+                acceptChar(c1.toChar())
+                c1 = c2
+                c2 = -1
+            } while (c1 >= 0)
+
+            byte = readByte()
+        }
     }
 
     inline fun write(
