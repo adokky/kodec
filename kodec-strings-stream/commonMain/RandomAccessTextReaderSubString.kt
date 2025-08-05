@@ -65,7 +65,7 @@ class RandomAccessTextReaderSubString(
     override fun computeHashCode(): Int {
         var hash = StringHashCode.init()
         reader.readAtPosition(start) {
-            readCharsInline(codePoints) { c ->
+            readCharsHeavyInline(codePoints) { c ->
                 hash = StringHashCode.next(hash, c)
             }
         }

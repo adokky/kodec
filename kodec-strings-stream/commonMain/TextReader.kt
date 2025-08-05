@@ -93,7 +93,7 @@ interface TextReader {
     fun readStringSizedInto(length: Int, output: StringBuilder) {
         if (length > 0) {
             var l = 0
-            readCharsInline { c ->
+            readCharsHeavyInline { c ->
                 if (l++ < length) { output.append(c); true } else false
             }
         }

@@ -11,7 +11,7 @@ inline fun RandomAccessTextReader.readSubStringInline(acceptChar: (Char) -> Bool
 inline fun RandomAccessTextReader.readSubStringInline(dest: RandomAccessTextReaderSubString, acceptChar: (Char) -> Boolean) {
     val start = position
     var hash = StringHashCode.init()
-    val codePoints = readCharsInline { c ->
+    val codePoints = readCharsHeavyInline { c ->
         if (acceptChar(c)) {
             hash = StringHashCode.next(hash, c)
             true

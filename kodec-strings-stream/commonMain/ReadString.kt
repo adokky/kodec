@@ -2,7 +2,7 @@ package io.kodec.text
 
 fun TextReader.readWholeString(builder: StringBuilder = StringBuilder()): String {
     val start = builder.length
-    readCharsInline { c -> builder.append(c); true }
+    readCharsHeavyInline { c -> builder.append(c); true }
     return builder.substring(start)
 }
 
@@ -28,7 +28,7 @@ fun TextReader.readStringUntil(
 
 /** Reads a string until [acceptChar] returns false or end of the stream is reached */
 fun TextReader.readStringWhile(acceptChar: (Char) -> Boolean) {
-    readCharsInline(acceptChar)
+    readCharsHeavyInline(acceptChar)
 }
 
 fun TextReader.nextCodePointAsString(): String = if (nextCodePoint >= 0) nextCodePoint.toChar().toString() else "EOF"

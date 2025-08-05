@@ -232,6 +232,7 @@ object StringsUTF8 {
         )
     }
 
+    // todo optimization: minimize acceptChar usages (see readFromByteStream)
     inline fun readFromBytes(
         getByte: (pos: Int) -> Int,
         endExclusive: Int,

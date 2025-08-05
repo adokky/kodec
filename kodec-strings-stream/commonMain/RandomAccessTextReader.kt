@@ -61,7 +61,7 @@ sealed class RandomAccessTextReader: TextReader {
         codePoints: Int,
         output: StringBuilder
     ): Int = readAtPosition(start) {
-        readCharsInline(codePoints, output::append)
+        readCharsHeavyInline(codePoints, output::append)
     }
 
     fun readStringCodePointSized(
@@ -83,7 +83,7 @@ sealed class RandomAccessTextReader: TextReader {
                 if (end == Int.MAX_VALUE) break
                 throw IndexOutOfBoundsException()
             }
-            StringsUTF16.getChars(cp) { hash = StringHashCode.next(hash, it) }
+            StringsUTF16.getCharsHeavyInline(cp) { hash = StringHashCode.next(hash, it) }
             codePoints++
         }
         RandomAccessTextReaderSubString(

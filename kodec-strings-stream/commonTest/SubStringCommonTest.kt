@@ -109,7 +109,7 @@ class SubStringCommonTest {
         val ssStart = position
         charIndex--
 
-        val codepoints = readCharsInline { charIndex++ != endCharIndex }
+        val codepoints = readCharsHeavyInline { charIndex++ != endCharIndex }
         val ssEnd = position
 
         return RandomAccessTextReaderSubString().also {

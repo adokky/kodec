@@ -35,17 +35,38 @@ object StringsUTF16 {
         return result
     }
 
-    inline fun getChars(codePoint: Int, acceptChar: (Char) -> Unit) {
-        getCharCodes(codePoint) { acceptChar(it.toChar()) }
+    inline fun getCharsHeavyInline(codePoint: Int, acceptChar: (Char) -> Unit) {
+        getCharCodesHeavyInline(codePoint) { acceptChar(it.toChar()) }
     }
 
-    inline fun getCharCodes(codePoint: Int, acceptCharCode: (Int) -> Unit) {
+    inline fun getCharCodesHeavyInline(codePoint: Int, acceptCharCode: (Int) -> Unit) {
         var c = codePoint
         if (codePoint >= MIN_SUPPLEMENTARY_CODE_POINT) {
             acceptCharCode(highSurrogateCharCode(codePoint))
             c = lowSurrogateCharCode(codePoint)
         }
+
         acceptCharCode(c)
+    }
+
+    inline fun getChars(codePoint: Int, acceptChar: (Char) -> Unit) {
+        getCharCodes(codePoint) { acceptChar(it.toChar()) }
+    }
+
+    inline fun getCharCodes(codePoint: Int, acceptCharCode: (Int) -> Unit) {
+        var c1 = codePoint
+        var c2 = -1
+
+        if (codePoint >= MIN_SUPPLEMENTARY_CODE_POINT) {
+            c1 = highSurrogateCharCode(codePoint)
+            c2 = lowSurrogateCharCode(codePoint)
+        }
+
+        do {
+            acceptCharCode(c1)
+            c1 = c2
+            c2 = -1
+        } while (c1 >= 0)
     }
 
     inline fun readFromCharStream(
