@@ -61,6 +61,12 @@ open class ArrayBuffer(
 
     final override fun get(pos: Int): Int = getByte(pos).asInt()
 
+    override fun tryGet(pos: Int): Int {
+        val idx = start + pos
+        if (idx < 0 || pos >= size) return -1
+        return array[idx].asInt()
+    }
+
     override fun getByte(pos: Int): Byte = array[start + pos]
 
     override fun putBytes(pos: Int, bytes: Buffer, startIndex: Int, endIndex: Int) {

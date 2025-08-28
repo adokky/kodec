@@ -5,10 +5,26 @@ import kotlin.jvm.JvmField
 interface Buffer {
     val size: Int
 
+    /**
+     * @return unsigned value of byte at specified [pos]
+     * @throws IndexOutOfBoundsException if [pos] is out of bounds
+     */
     operator fun get(pos: Int): Int
 
+    /** @return unsigned value of byte at specified [pos] or -1 if [pos] is out of bounds */
+    fun tryGet(pos: Int): Int = if (pos in 0..<size) get(pos) else -1
+
+    /**
+     * @return value of byte at specified [pos]
+     * @throws IndexOutOfBoundsException if [pos] is out of bounds
+     */
     fun getByte(pos: Int): Byte = get(pos).toByte()
 
+    /**
+     * Returns a view of the portion of this buffer between the
+     * specified [start] (inclusive) and [endExclusive].
+     * Any changes in this buffer are reflected in the returned buffer.
+     */
     fun subBuffer(start: Int, endExclusive: Int): Buffer =
         SubBufferWrapper(this, start, endExclusive)
 
