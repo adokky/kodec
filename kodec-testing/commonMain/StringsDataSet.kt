@@ -6,7 +6,7 @@ object StringsDataSet {
     const val singleSurrogatePair: String = "\uD801\uDC37" // '𐐷'
 
     val utfTestString: String = buildString {
-        val chars = charArrayOf('a', 'ф', '﷽')
+        val chars = charArrayOf('a', 'ф', 'ꙁ')
         for (c1 in chars)
             for (c2 in chars)
                 for (c3 in chars) {
@@ -36,7 +36,7 @@ object StringsDataSet {
             "!П",
             "\u2705, \u10cb",
             singleSurrogatePair,
-            "﷽ WHAT is that? \uD809\uDC2B\uD808\uDE19⸻ and finally ꧅"
+            "ꙁ WHAT is that? \uD809\uDC2B\uD808\uDE19⸻ and finally \uD803\uDE81"
         )
         .plus(getAsciiData())
         .plus(getRandomThreeChars(count = 10_000, random))

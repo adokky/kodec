@@ -41,6 +41,6 @@ class StringsUtf16Test: StringsTestBase() {
         assertEquals(2, StringsUTF16.countCodePoints("\uD801\uDC37 "))
         assertEquals(3, StringsUTF16.countCodePoints("\uD801\uDC37 \uD801\uDC37"))
         assertEquals(4, StringsUTF16.countCodePoints("\uD801\uDC37 \uD801\uDC37 "))
-        assertEquals(32, StringsUTF16.countCodePoints("﷽ WTF is that? \uD809\uDC2B\uD808\uDE19⸻ and finally ꧅"))
+        assertEquals(32, StringsUTF16.countCodePoints("ꙕ WTF is that? \uD809\uDC2B\uD808\uDE19⸻ and finally Ꚃ"))
     }
 }

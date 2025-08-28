@@ -326,6 +326,41 @@ abstract class AbstractTextReaderTest {
     }
 
     @Test
+    fun utf_codepoints() {
+        setText("a1ф2Ꙁ3")
+        assertEquals('a', reader.readCodePoint().toChar())
+        reader.expect('1')
+        assertEquals('ф', reader.readCodePoint().toChar())
+        reader.expect('2')
+        assertEquals('Ꙁ', reader.readCodePoint().toChar())
+        reader.expect('3')
+        reader.expectEof()
+
+        val text = "\u0A12\u1A13\uAA34\ufA56\uAA34\u1A13\u0A12"
+        setText(text)
+        for (c in text) {
+            assertEquals(c, reader.readCodePoint().toChar())
+        }
+        reader.expectEof()
+
+        for (c in text) {
+            setText(c.toString())
+            assertEquals(c, reader.readCodePoint().toChar())
+            reader.expectEof()
+        }
+    }
+
+    @Test
+    fun utf_surrogates() {
+        StringsDataSet.getSurrogatePairs(100_000).forEach { chars ->
+            val expected = StringsUTF16.codePoint(chars[0].code, chars[1].code)
+            setText(chars + "Ё")
+            assertEquals(expected, reader.readCodePoint())
+            reader.expect('Ё')
+        }
+    }
+
+    @Test
     fun read_string_sized2() {
         for (s in StringsDataSet.getUtfData()) {
             setText(s)
