@@ -1,6 +1,9 @@
 package io.kodec.text
 
 import io.kodec.*
+import io.kodec.StringsUTF8.is_header_2_bytes
+import io.kodec.StringsUTF8.is_header_3_bytes
+import io.kodec.StringsUTF8.is_header_4_bytes
 import io.kodec.buffers.Buffer
 import io.kodec.buffers.asArrayBuffer
 import kotlin.jvm.JvmStatic
@@ -34,18 +37,43 @@ open class Utf8TextReader(buffer: Buffer = Buffer.Empty): RandomAccessTextReader
         val firstByte = buffer[pos]
         nextPosition = pos + 1
 
-        if (firstByte < 128) return firstByte
-
-        return readCodePointSlow(firstByte)
+        return if (firstByte < 128) firstByte else readCodePoint2Bytes(firstByte)
     }
 
-    private fun readCodePointSlow(firstByte: Int): Int {
-        return StringsUTF8.readCodePoint(firstByte) {
-            val pos = nextPosition
-            if (pos >= buffer.size) return StringsASCII.INVALID_BYTE_PLACEHOLDER.code
-            nextPosition = pos + 1
-            buffer[pos]
+    private fun readCodePoint2Bytes(firstByte: Int): Int {
+        if (!firstByte.is_header_2_bytes()) return readCodePoint3Bytes(firstByte)
+
+        val pos = nextPosition
+        if (pos >= buffer.size) return StringsASCII.INVALID_BYTE_PLACEHOLDER.code
+        nextPosition = pos + 1
+        return StringsUTF8.codePoint(firstByte, buffer[pos])
+    }
+
+    private fun readCodePoint3Bytes(firstByte: Int): Int {
+        if (!firstByte.is_header_3_bytes()) return readCodePoint4Bytes(firstByte)
+
+        val pos = nextPosition
+        if (pos + 1 >= buffer.size) {
+            nextPosition = buffer.size
+            return StringsASCII.INVALID_BYTE_PLACEHOLDER.code
         }
+
+        nextPosition = pos + 2
+        return StringsUTF8.codePoint(firstByte, buffer[pos], buffer[pos + 1])
+    }
+
+    private fun readCodePoint4Bytes(firstByte: Int): Int {
+        if (firstByte.is_header_4_bytes()) {
+            val pos = nextPosition
+            if (pos + 2 < buffer.size) {
+                nextPosition = pos + 3
+                return StringsUTF8.codePoint(firstByte, buffer[pos], buffer[pos + 1], buffer[pos + 2])
+            } else {
+                nextPosition = buffer.size
+            }
+        }
+
+        return StringsASCII.INVALID_BYTE_PLACEHOLDER.code
     }
 
     override fun parseFloat(start: Int, end: Int, onFormatError: DecodingErrorHandler<String>): ASCIIToBinaryConverter =
