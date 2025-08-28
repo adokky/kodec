@@ -14,17 +14,6 @@ interface TextReader {
     /** @return UTF codepoint or -1 if reached end of stream */
     fun readCodePoint(): Int
 
-    /**
-     * Unsafe and performant function assuming next code point is in ASCII range.
-     *
-     * If next code point is *not* in ASCII range then
-     * result will be *any* number *outside* of ASCII range (even negative) and
-     * the reader turns into broken state.
-     *
-     * @see [RandomAccessTextReader.fixNextCodePoint]
-     */
-    fun readAsciiCode(): Int = readCodePoint().toByte().toInt()
-
     fun skipWhitespace() {
         while(nextCodePoint in 0..' '.code) readCodePoint()
     }

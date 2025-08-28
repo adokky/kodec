@@ -115,7 +115,7 @@ abstract class AbstractTextReaderTest {
     @Test
     fun floats() {
         for (n in NumbersDataSet.floats32.filter { it.isFinite() }) {
-            for (nStr in arrayOf(n.toString(), "$n ,", "${n}ё")) {
+            for (nStr in arrayOf(n.toString(), "$n ,", "${n})")) {
                 enrichMessageOf<Throwable>({ "failed on: '$nStr'" }) {
                     setText(nStr)
                     assertNearlyEquals(n, reader.readFloat())
@@ -134,10 +134,14 @@ abstract class AbstractTextReaderTest {
                     return
                 }
 
-                var fired = false
-                val errHandler = DecodingErrorHandler<Any> { fired = true }
-                reader.readFloat(allowSpecialValues = false, onFormatError = errHandler)
-                assertTrue(fired, "'onFormatError' is not called")
+                checkFails { errHandler ->
+                    reader.readFloat(allowSpecialValues = false, onFormatError = errHandler)
+                }
+
+                setText(input + "ё")
+                checkFails { errHandler ->
+                    reader.readFloat(allowSpecialValues = false, onFormatError = errHandler)
+                }
 
                 assertFailsWith<TextDecodingException> { reader.readFloat() }
             }
@@ -146,8 +150,15 @@ abstract class AbstractTextReaderTest {
             check("Infinity") { it.isInfinite() && it > 0 }
             check("NaN") { it.isNaN() }
             check("-0") { it == -0f }
-            check("+0") { it == +0f }
+            check("+0") { it == 0f }
         }
+    }
+
+    private fun checkFails(handler: (DecodingErrorHandler<Any>) -> Unit) {
+        var fired = false
+        val errHandler = DecodingErrorHandler<Any> { fired = true }
+        handler(errHandler)
+        assertTrue(fired, "'onFormatError' is not called")
     }
 
     @Test
@@ -160,10 +171,14 @@ abstract class AbstractTextReaderTest {
                     return
                 }
 
-                var fired = false
-                val errHandler = DecodingErrorHandler<Any> { fired = true }
-                reader.readDouble(allowSpecialValues = false, onFormatError = errHandler)
-                assertTrue(fired, "'onFormatError' is not called")
+                checkFails { errHandler ->
+                    reader.readDouble(allowSpecialValues = false, onFormatError = errHandler)
+                }
+
+                setText(input + "ё")
+                checkFails { errHandler ->
+                    reader.readDouble(allowSpecialValues = false, onFormatError = errHandler)
+                }
 
                 assertFailsWith<TextDecodingException> { reader.readDouble() }
             }
@@ -172,7 +187,7 @@ abstract class AbstractTextReaderTest {
             check("Infinity") { it.isInfinite() && it > 0 }
             check("NaN") { it.isNaN() }
             check("-0") { it == -0.0 }
-            check("+0") { it == +0.0 }
+            check("+0") { it == 0.0 }
         }
     }
 

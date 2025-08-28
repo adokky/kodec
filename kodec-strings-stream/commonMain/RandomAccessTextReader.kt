@@ -1,6 +1,8 @@
 package io.kodec.text
 
 import io.kodec.*
+import karamel.utils.BitDescriptors
+import karamel.utils.Bits32
 
 /*
  * WARN: Derived classes should override default initialization
@@ -32,7 +34,7 @@ sealed class RandomAccessTextReader: TextReader {
 
     abstract fun parseFloat(start: Int, end: Int, onFormatError: DecodingErrorHandler<String> = fail): ASCIIToBinaryConverter
 
-    /** @see [TextReader.readAsciiCode] */
+    /** @see [readAsciiCode] */
     abstract fun readAsciiCode(position: Int): Int
 
     /**
@@ -100,27 +102,54 @@ sealed class RandomAccessTextReader: TextReader {
         return nextCodePoint.also { _nextCodePoint = readNextCodePoint() }
     }
 
-    override fun readAsciiCode(): Int {
+    /**
+     * Unsafe and performant function assuming next code point is in ASCII range.
+     *
+     * If next code point is *not* in ASCII range then
+     * result will be *any* number *outside* of ASCII range (even negative) and
+     * the reader turns into broken state.
+     *
+     * @see [fixNextCodePoint]
+     */
+    fun readAsciiCode(): Int {
         _position = nextPosition
         return nextCodePoint.also { _nextCodePoint = readNextAsciiCode() }
+    }
+
+    fun <BDS: BitDescriptors> parseFloat(
+        allowSpecialValues: Boolean = false,
+        onFormatError: DecodingErrorHandler<String> = fail,
+        charClasses: CharToClassMapper<BDS>,
+        terminatorClass: Bits32<BDS>,
+    ): ASCIIToBinaryConverter {
+        val start = position
+        var special: ASCIIToBinaryConverter? = null
+
+        if (allowSpecialValues) special = tryReadSpecialFpValue()
+
+        if (special == null) {
+            position = start
+            while (DefaultCharClasses.isFloatLiteral(nextCodePoint)) readAsciiCode()
+            fixNextCodePoint()
+        }
+
+        if (!charClasses.hasClass(nextCodePoint, terminatorClass)) {
+            onFormatError("invalid number format")
+            return ASCIIToBinaryConverter.NaN
+        }
+
+        return special ?: parseFloat(start, end = position, onFormatError)
     }
 
     fun parseFloat(
         allowSpecialValues: Boolean = false,
         onFormatError: DecodingErrorHandler<String> = fail
-    ): ASCIIToBinaryConverter {
-        val start = position
-
-        if (allowSpecialValues) {
-            tryReadSpecialFpValue()?.let { return it }
-            position = start
-        }
-
-        while (DefaultCharClasses.isFloatLiteral(nextCodePoint)) readAsciiCode()
-        fixNextCodePoint()
-
-        return parseFloat(start, end = position, onFormatError)
-    }
+    ): ASCIIToBinaryConverter = parseFloat(
+        allowSpecialValues = allowSpecialValues,
+        onFormatError = onFormatError,
+        charClasses = DefaultCharClasses.mapper,
+        terminatorClass = DefaultCharClasses.WORD_TERM,
+    )
 
     private fun tryReadSpecialFpValue(): ASCIIToBinaryConverter? {
         val negative = trySkip('-')
@@ -141,19 +170,15 @@ sealed class RandomAccessTextReader: TextReader {
                 return null
             }
         }
+        fixNextCodePoint()
 
         return if (negative) ASCIIToBinaryConverter.NegativeInfinity else ASCIIToBinaryConverter.PositiveInfinity
     }
 
     private fun readNaN(): ASCIIToBinaryConverter? {
-        readAsciiCode()
-
-        if (readAsciiCode() == 'a'.code &&
-            readAsciiCode() == 'n'.code)
-            return ASCIIToBinaryConverter.NaN
-
-        fixNextCodePoint()
-        return null
+        readCodePoint()
+        if (readCodePoint() != 'a'.code || readCodePoint() != 'n'.code) return null
+        return ASCIIToBinaryConverter.NaN
     }
 
     override fun readFloat(allowSpecialValues: Boolean, onFormatError: DecodingErrorHandler<String>): Float =

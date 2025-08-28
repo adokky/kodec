@@ -28,7 +28,7 @@ class BufferTextReaderTest: AbstractTextReaderTest() {
 
     @Test
     fun float_eof_handling() {
-        setText("1.1Ё")
+        setText("1.1;")
         assertTrue(reader.readFloat().nearlyEquals(1.1f))
         reader.position = 0
         assertTrue(reader.readDouble().nearlyEquals(1.1))
@@ -85,7 +85,7 @@ class BufferTextReaderTest: AbstractTextReaderTest() {
         for (s in StringsDataSet.getUtfData(random = random)) {
             val binary = s.encodeToByteArray()
             enrichMessageOf<Throwable>({
-                "failed on '$s',  binary: ${binary.map { Bits32<Unit>(it.asInt()) }}"
+                "failed on '$s', binary: ${binary.map { Bits32<Unit>(it.asInt()) }}"
             }) {
                 reader.startReadingFrom(binary.asDataBuffer())
 
@@ -126,8 +126,17 @@ class BufferTextReaderTest: AbstractTextReaderTest() {
     private fun Byte.isFirstUtf8CodePointByte(): Boolean = this >= 0 || (this.asInt() >= 0b1100_0000)
 
     private fun TextReader.assertEof() {
+        assertPositionAtEof()
         assertEquals(-1, nextCodePoint)
         assertEquals(-1, readCodePoint())
         assertEquals(-1, readCodePoint())
+        assertPositionAtEof()
+    }
+
+    private fun TextReader.assertPositionAtEof() {
+        when(this) {
+            is Utf8TextReader -> assertEquals(buffer.size, nextPosition)
+            is StringTextReader -> assertEquals(input.length, nextPosition)
+        }
     }
 }
