@@ -1,5 +1,5 @@
 [versions]
-quickMpp = "0.15"
+quickMpp = "0.17"
 equalsTester = "0.13"
 karamelUtils = "0.1.1"
 bitvector = "0.9.2"
