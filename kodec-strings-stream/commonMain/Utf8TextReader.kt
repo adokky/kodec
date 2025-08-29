@@ -76,7 +76,7 @@ open class Utf8TextReader(buffer: Buffer = Buffer.Empty): RandomAccessTextReader
         return StringsASCII.INVALID_BYTE_PLACEHOLDER.code
     }
 
-    override fun parseFloat(start: Int, end: Int, onFormatError: DecodingErrorHandler<String>): ASCIIToBinaryConverter =
+    override fun parseFloat(start: Int, end: Int, onFormatError: DecodingErrorHandler<String>): StringToFpConverter =
         buffer.parseFloat(start, end, onFormatError)
 
     fun startReadingFrom(input: Buffer, position: Int = 0) {

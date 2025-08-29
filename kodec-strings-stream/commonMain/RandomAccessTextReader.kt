@@ -32,7 +32,7 @@ sealed class RandomAccessTextReader: TextReader {
     protected abstract fun readNextCodePoint(): Int
     protected abstract fun readNextAsciiCode(): Int
 
-    abstract fun parseFloat(start: Int, end: Int, onFormatError: DecodingErrorHandler<String> = fail): ASCIIToBinaryConverter
+    abstract fun parseFloat(start: Int, end: Int, onFormatError: DecodingErrorHandler<String> = fail): StringToFpConverter
 
     /** @see [readAsciiCode] */
     abstract fun readAsciiCode(position: Int): Int
@@ -121,9 +121,9 @@ sealed class RandomAccessTextReader: TextReader {
         onFormatError: DecodingErrorHandler<String> = fail,
         charClasses: CharToClassMapper<BDS>,
         terminatorClass: Bits32<BDS>,
-    ): ASCIIToBinaryConverter {
+    ): StringToFpConverter {
         val start = position
-        var special: ASCIIToBinaryConverter? = null
+        var special: StringToFpConverter? = null
 
         if (allowSpecialValues) special = tryReadSpecialFpValue()
 
@@ -135,7 +135,7 @@ sealed class RandomAccessTextReader: TextReader {
 
         if (!charClasses.hasClass(nextCodePoint, terminatorClass)) {
             onFormatError("invalid number format")
-            return ASCIIToBinaryConverter.NaN
+            return StringToFpConverter.NaN
         }
 
         return special ?: parseFloat(start, end = position, onFormatError)
@@ -144,14 +144,14 @@ sealed class RandomAccessTextReader: TextReader {
     fun parseFloat(
         allowSpecialValues: Boolean = false,
         onFormatError: DecodingErrorHandler<String> = fail
-    ): ASCIIToBinaryConverter = parseFloat(
+    ): StringToFpConverter = parseFloat(
         allowSpecialValues = allowSpecialValues,
         onFormatError = onFormatError,
         charClasses = DefaultCharClasses.mapper,
         terminatorClass = DefaultCharClasses.WORD_TERM,
     )
 
-    private fun tryReadSpecialFpValue(): ASCIIToBinaryConverter? {
+    private fun tryReadSpecialFpValue(): StringToFpConverter? {
         val negative = trySkip('-')
 
         return when(nextCodePoint or StringsASCII.LOWER_CASE_BIT) {
@@ -161,7 +161,7 @@ sealed class RandomAccessTextReader: TextReader {
         }
     }
 
-    private fun readInfinity(negative: Boolean): ASCIIToBinaryConverter? {
+    private fun readInfinity(negative: Boolean): StringToFpConverter? {
         readAsciiCode()
 
         for (c in "nfinity") {
@@ -172,13 +172,13 @@ sealed class RandomAccessTextReader: TextReader {
         }
         fixNextCodePoint()
 
-        return if (negative) ASCIIToBinaryConverter.NegativeInfinity else ASCIIToBinaryConverter.PositiveInfinity
+        return if (negative) StringToFpConverter.NegativeInfinity else StringToFpConverter.PositiveInfinity
     }
 
-    private fun readNaN(): ASCIIToBinaryConverter? {
+    private fun readNaN(): StringToFpConverter? {
         readCodePoint()
         if (readCodePoint() != 'a'.code || readCodePoint() != 'n'.code) return null
-        return ASCIIToBinaryConverter.NaN
+        return StringToFpConverter.NaN
     }
 
     override fun readFloat(allowSpecialValues: Boolean, onFormatError: DecodingErrorHandler<String>): Float =

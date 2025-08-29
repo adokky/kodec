@@ -6,15 +6,16 @@ import kotlin.math.max
 import kotlin.math.min
 
 /**
- * A buffered implementation of `ASCIIToBinaryConverter`.
+ * The actual conversion is happening here.
+ *
+ * In order to function, this class requires all its state to be
+ * preinitialized at parsing stage (see [FloatingDecimalParsing.readBuffer]).
  */
-internal class ASCIIToBinaryBuffer(
-    var isNegative: Boolean,
-    var decExponent: Int,
-    val digits: ByteArray,
-    var nDigits: Int
-) : ASCIIToBinaryConverter {
-    constructor(): this(false, 0, ByteArray(30), 0)
+internal class StringToFpBuffer: StringToFpConverter {
+    var isNegative: Boolean = false
+    var decExponent: Int = 0
+    var nDigits: Int = 0
+    val digits = ByteArray(30)
 
     /**
      * Takes a FloatingDecimal, which we presumably just scanned in,
@@ -177,6 +178,7 @@ internal class ASCIIToBinaryBuffer(
             nDigits = FloatingDecimalToAscii.MAX_NDIGITS + 1
             digits[FloatingDecimalToAscii.MAX_NDIGITS] = '1'.code.toByte()
         }
+
         var bigD0 = FDBigInteger(lValue, digits, kDigits, nDigits)
         exp = decExponent - nDigits
 
@@ -301,8 +303,8 @@ internal class ASCIIToBinaryBuffer(
                 }
                 break@correctionLoop
             } else {
-                // difference is non-trivial.
-                // could scale addend by ratio of difference to
+                // Difference is non-trivial.
+                // Could scale addend by ratio of difference to
                 // halfUlp here, if we bothered to compute that difference.
                 // Most of the time ( I hope ) it is about 1 anyway.
                 ieeeBits += (if (overvalue) -1 else 1).toLong() // nextDown or nextUp
@@ -592,6 +594,8 @@ internal class ASCIIToBinaryBuffer(
         if (isNegative) ieeeBits = ieeeBits or Float32Consts.SIGN_BIT_MASK
         return Float.fromBits(ieeeBits)
     }
+
+    override fun toString(): String = doubleValue().toString()
 
     companion object {
         /**

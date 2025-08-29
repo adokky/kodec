@@ -52,7 +52,7 @@ open class StringTextReader(input: CharSequence = ""): RandomAccessTextReader() 
     override fun substring(start: Int, end: Int): AbstractSubString =
         SimpleSubString(input, start, end).also { it.validateRange() }
 
-    override fun parseFloat(start: Int, end: Int, onFormatError: DecodingErrorHandler<String>): ASCIIToBinaryConverter =
+    override fun parseFloat(start: Int, end: Int, onFormatError: DecodingErrorHandler<String>): StringToFpConverter =
         FloatingDecimalParsing.readString(input, start, end, onFormatError = onFormatError)
 
     fun startReadingFrom(input: CharSequence, position: Int = 0) {

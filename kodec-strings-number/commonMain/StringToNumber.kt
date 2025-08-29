@@ -7,7 +7,7 @@ fun Buffer.parseFloat(
     start: Int = 0,
     endExclusive: Int = size,
     onFormatError: DecodingErrorHandler<String>? = null
-): ASCIIToBinaryConverter {
+): StringToFpConverter {
     return FloatingDecimalParsing.readBuffer(this, start, endExclusive, onFormatError = onFormatError)
 }
 

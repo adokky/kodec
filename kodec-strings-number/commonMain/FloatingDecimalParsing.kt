@@ -1,15 +1,20 @@
 package io.kodec
 
-import io.kodec.PreparedASCIIToBinaryBuffer.Companion.NEGATIVE_INFINITY
-import io.kodec.PreparedASCIIToBinaryBuffer.Companion.NEGATIVE_ZERO
-import io.kodec.PreparedASCIIToBinaryBuffer.Companion.NOT_A_NUMBER
-import io.kodec.PreparedASCIIToBinaryBuffer.Companion.POSITIVE_INFINITY
-import io.kodec.PreparedASCIIToBinaryBuffer.Companion.POSITIVE_ZERO
+import io.kodec.PreparedStringToFpBuffer.Companion.NEGATIVE_INFINITY
+import io.kodec.PreparedStringToFpBuffer.Companion.NEGATIVE_ZERO
+import io.kodec.PreparedStringToFpBuffer.Companion.NOT_A_NUMBER
+import io.kodec.PreparedStringToFpBuffer.Companion.POSITIVE_INFINITY
+import io.kodec.PreparedStringToFpBuffer.Companion.POSITIVE_ZERO
 import io.kodec.buffers.*
 import karamel.utils.ThreadLocal
 import karamel.utils.suppress
 import kotlin.jvm.JvmStatic
 
+/**
+ * A converter which can process an ASCII `String` representation
+ * of a single or double precision floating point value into a
+ * `float` or a `double`.
+ */
 object FloatingDecimalParsing {
     @Throws(NumberFormatException::class)
     fun parseDouble(s: String): Double = readString(s).doubleValue()
@@ -26,7 +31,7 @@ object FloatingDecimalParsing {
         readString(s, start, endExclusive).floatValue()
 
     private class ThreadLocalCache {
-        val buffer = ASCIIToBinaryBuffer()
+        val buffer = StringToFpBuffer()
 
         val asciiWholeBuffer = WholeAsciiStringAsBuffer()
         val asciiBuffer = AsciiStringAsBuffer()
@@ -37,7 +42,7 @@ object FloatingDecimalParsing {
     fun readString(
         s: CharSequence,
         onFormatError: DecodingErrorHandler<String>? = null
-    ): ASCIIToBinaryConverter {
+    ): StringToFpConverter {
         val cache = TL_CACHE.get()
         cache.asciiWholeBuffer.string = s
         return readBuffer(cache.asciiWholeBuffer, onFormatError = onFormatError)
@@ -47,7 +52,7 @@ object FloatingDecimalParsing {
         s: CharSequence,
         start: Int, endExclusive: Int,
         onFormatError: DecodingErrorHandler<String>? = null
-    ): ASCIIToBinaryConverter {
+    ): StringToFpConverter {
         val cache = TL_CACHE.get()
         cache.asciiBuffer.setString(s, start, endExclusive)
         return readBuffer(cache.asciiBuffer, onFormatError = onFormatError)
@@ -63,7 +68,7 @@ object FloatingDecimalParsing {
         start: Int = 0,
         endExclusive: Int = input.size,
         onFormatError: DecodingErrorHandler<String>? = null
-    ): ASCIIToBinaryConverter {
+    ): StringToFpConverter {
         val onFormatError = onFormatError ?: DEFAULT_ERROR_HANDLER
 
         var isNegative = false

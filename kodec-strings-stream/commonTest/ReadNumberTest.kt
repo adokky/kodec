@@ -76,7 +76,7 @@ class ReadNumberTest {
         var double: Double? = null
         reader.readNumberTemplate(
             acceptInt = { fail("expected acceptFloat() but called acceptInt() for '$input'") },
-            acceptFloat = { double = it },
+            acceptFloat = { double = it.doubleValue() },
             allowSpecialFp = allowSpecial,
             charClasses = DefaultCharClasses.mapper,
             terminatorClass = terminationClasses

@@ -1,5 +1,6 @@
 package io.kodec.text
 
+import io.kodec.StringToFpConverter
 import io.kodec.DecodingErrorHandler
 import io.kodec.DecodingErrorWithMessage
 import io.kodec.StringsASCII
@@ -14,7 +15,7 @@ enum class NumberParsingError(override val message: String): DecodingErrorWithMe
 
 inline fun RandomAccessTextReader.readNumberTemplate(
     acceptInt: (Long) -> Unit,
-    acceptFloat: (Double) -> Unit,
+    acceptFloat: (StringToFpConverter) -> Unit,
     onFail: (error: NumberParsingError) -> Unit = { fail(it.message) },
     allowSpecialFp: Boolean = false
 ) {
@@ -30,7 +31,7 @@ inline fun RandomAccessTextReader.readNumberTemplate(
 
 inline fun <BDS: BitDescriptors> RandomAccessTextReader.readNumberTemplate(
     acceptInt: (Long) -> Unit,
-    acceptFloat: (Double) -> Unit,
+    acceptFloat: (StringToFpConverter) -> Unit,
     charClasses: CharToClassMapper<BDS>,
     terminatorClass: Bits32<BDS>,
     onFail: (error: NumberParsingError) -> Unit = { fail(it.message) },
@@ -62,7 +63,7 @@ inline fun <BDS: BitDescriptors> RandomAccessTextReader.readNumberTemplate(
 
         while (!charClasses.hasClass(nextCodePoint, terminatorClass) && nextCodePoint >= 0) readCodePoint()
 
-        val result = parseFloat(start, position, onFormatError = errorContainer.prepare()).doubleValue()
+        val result = parseFloat(start, position, onFormatError = errorContainer.prepare())
         errorContainer.consumeError { onFail(NumberParsingError.MalformedNumber); return }
 
         if (!charClasses.hasClass(nextCodePoint, terminatorClass)) {
@@ -101,51 +102,35 @@ inline fun <BDS: BitDescriptors> RandomAccessTextReader.readNumberTemplate(
 }
 
 class ReadNumberResult {
-    var asDouble: Double = 0.0
-        private set
     var asLong: Long = 0
         private set
-    var isDouble: Boolean = false
-        private set
 
-    fun set(double: Double) {
-        asDouble = double
-        isDouble = true
-    }
+    private var fpResult: StringToFpConverter? = null
 
-    fun set(long: Long) {
+    val asDouble: Double get() = fpResult?.doubleValue() ?: 0.0
+    val asFloat: Float get() = fpResult?.floatValue() ?: 0.0f
+
+    val isDouble: Boolean get() = fpResult != null
+
+    fun set(long: Long): ReadNumberResult {
         asLong = long
-        isDouble = false
-    }
-
-    fun clear(): ReadNumberResult {
-        asLong = 0
-        asDouble = 0.0
-        isDouble = false
+        fpResult = null
         return this
     }
 
-    override fun toString(): String {
-        return (if (isDouble) asDouble else asLong).toString()
+    fun set(converter: StringToFpConverter): ReadNumberResult {
+        asLong = 0
+        fpResult = converter
+        return this
     }
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is ReadNumberResult) return false
-
-        if (asDouble != other.asDouble) return false
-        if (asLong != other.asLong) return false
-        if (isDouble != other.isDouble) return false
-
-        return true
+    fun clear(): ReadNumberResult {
+        fpResult = null
+        asLong = 0
+        return this
     }
 
-    override fun hashCode(): Int {
-        var result = asDouble.hashCode()
-        result = 31 * result + asLong.hashCode()
-        result = 31 * result + isDouble.hashCode()
-        return result
-    }
+    override fun toString(): String = (if (isDouble) asDouble else asLong).toString()
 }
 
 fun <BDS: BitDescriptors> RandomAccessTextReader.readNumber(
