@@ -322,7 +322,7 @@ internal class FDBigInteger {
 
     /**
      * Multiplies this `FDBigInteger` by
-     * `5<sup>p5</sup> * 2<sup>p2</sup>`. The operation will be
+     * `5^p5 * 2^p2`. The operation will be
      * performed in place if possible, otherwise a new `FDBigInteger`
      * will be returned.
      *
@@ -513,8 +513,7 @@ internal class FDBigInteger {
     }
 
     /**
-     * Compares this `FDBigInteger` with
-     * `5<sup>p5</sup> * 2<sup>p2</sup>`.
+     * Compares this `FDBigInteger` with `5^p5 * 2^p2`.
      * Returns an integer accordingly as:
      * * > 0: this > other
      * * 0: this == other
@@ -821,12 +820,11 @@ internal class FDBigInteger {
         private const val LONG_MASK = 0xffffffffL
 
         /**
-         * Returns an `FDBigInteger` with the numerical value
-         * `5<sup>p5</sup> * 2<sup>p2</sup>`.
+         * Returns an `FDBigInteger` with the numerical value `5^p5 * 2^p2`.
          *
          * @param p5 The exponent of the power-of-five factor.
          * @param p2 The exponent of the power-of-two factor.
-         * @return `5<sup>p5</sup> * 2<sup>p2</sup>`
+         * @return `5^p5 * 2^p2`
          */
         fun valueOfPow52(p5: Int, p2: Int): FDBigInteger {
             if (p5 != 0) {
@@ -856,12 +854,12 @@ internal class FDBigInteger {
 
         /**
          * Returns an `FDBigInteger` with the numerical value
-         * `value * 5<sup>p5</sup> * 2<sup>p2</sup>`.
+         * `value * 5^p5 * 2^p2`.
          *
          * @param value The constant factor.
          * @param p5 The exponent of the power-of-five factor.
          * @param p2 The exponent of the power-of-two factor.
-         * @return `value * 5<sup>p5</sup> * 2<sup>p2</sup>`
+         * @return `value * 5^p5 * 2^p2`
          */
         fun valueOfMulPow52(value: Long, p5: Int, p2: Int): FDBigInteger {
             var v0 = value.toInt()
@@ -919,10 +917,10 @@ internal class FDBigInteger {
 
         /**
          * Returns an `FDBigInteger` with the numerical value
-         * `2<sup>p2</sup>`.
+         * `2^p2`.
          *
          * @param p2 The exponent of 2.
-         * @return `2<sup>p2</sup>`
+         * @return `2^p2`
          */
         private fun valueOfPow2(p2: Int): FDBigInteger {
             val wordCount = p2 shr 5
@@ -1077,7 +1075,7 @@ internal class FDBigInteger {
         /**
          * Computes `5` raised to a given power.
          * @param p The exponent of 5.
-         * @return `5<sup>p</sup>`.
+         * @return `5^p`.
          */
         private fun big5pow(p: Int): FDBigInteger = if (p < MAX_FIVE_POW) POW_5_CACHE[p] else big5powRec(p)
 
@@ -1085,7 +1083,7 @@ internal class FDBigInteger {
         /**
          * Computes `5` raised to a given power.
          * @param p The exponent of 5.
-         * @return `5<sup>p</sup>`.
+         * @return `5^p`.
          */
         private fun big5powRec(p: Int): FDBigInteger {
             if (p < MAX_FIVE_POW) return POW_5_CACHE[p]
