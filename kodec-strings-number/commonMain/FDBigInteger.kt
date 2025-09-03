@@ -2,6 +2,7 @@ package io.kodec
 
 import io.kodec.buffers.OutputBuffer
 import karamel.utils.asInt
+import karamel.utils.assert
 import karamel.utils.assertionsEnabled
 import kotlin.math.max
 
@@ -11,14 +12,14 @@ import kotlin.math.max
  */
 internal class FDBigInteger {
     // value: data[0] is least significant
-    private var data: IntArray
+    var data: IntArray = emptyIntArray
 
     // number of the least significant zero padding ints
-    private var offset: Int
+    var offset: Int = 9
 
     // if nWords==0 -> this FDBigInteger is zero
     // data[nWords-1]!=0, all values above are zero
-    private var nWords: Int
+    var nWords: Int = 0
 
     var isImmutable = false
 
@@ -29,6 +30,8 @@ internal class FDBigInteger {
         if (nWords > 0) require(data[nWords - 1] != 0)
         for (i in nWords until data.size) require(data[i] == 0)
     }
+
+    constructor()
 
     /**
      * Constructs an `FDBigInteger` from data and padding. The
@@ -42,11 +45,7 @@ internal class FDBigInteger {
      * below the least significant element of `data`.
      */
     private constructor(data: IntArray, offset: Int) {
-        this.data = data
-        this.offset = offset
-        this.nWords = data.size
-        trimLeadingZeros()
-        if (assertionsEnabled) checkInvariants()
+        init(data, offset)
     }
 
     /**
@@ -59,9 +58,27 @@ internal class FDBigInteger {
      * @param nDigits The final index into `digits`.
      */
     constructor(lValue: Long, digits: ByteArray, kDigits: Int, nDigits: Int) {
+        init(lValue, digits, kDigits, nDigits)
+    }
+
+    private fun init(data: IntArray, offset: Int): FDBigInteger {
+        assert { !isImmutable }
+
+        this.data = data
+        this.offset = offset
+        this.nWords = data.size
+
+        trimLeadingZeros()
+
+        if (assertionsEnabled) checkInvariants()
+        return this
+    }
+
+    fun init(lValue: Long, digits: ByteArray, kDigits: Int, nDigits: Int): FDBigInteger {
         if (assertionsEnabled) {
-            require(kDigits in 0..nDigits && nDigits <= digits.size)
-            for (i in 0 until nDigits) require(digits[i] in '0'.code..'9'.code)
+            require(!isImmutable)
+            require(kDigits in 0 .. nDigits && nDigits <= digits.size)
+            for (i in 0 until nDigits) require(digits[i] in '0'.code .. '9'.code)
         }
 
         val n = max(((nDigits + 8) / 9).toDouble(), 2.0).toInt() // estimate size needed.
@@ -90,6 +107,12 @@ internal class FDBigInteger {
         if (factor != 1) multAddMe(factor, v)
 
         trimLeadingZeros()
+        return this
+    }
+
+    fun mutable(): FDBigInteger {
+        isImmutable = false
+        return this
     }
 
     /**
@@ -132,15 +155,16 @@ internal class FDBigInteger {
      * @param shift The number of bits to shift left.
      * @return The shifted `FDBigInteger`.
      */
-    fun leftShift(shift: Int): FDBigInteger {
+    fun leftShift(shift: Int, result: FDBigInteger? = null): FDBigInteger {
         if (shift == 0 || nWords == 0) return this
 
         val wordCount = shift shr 5
         val bitcount = shift and 0x1f
 
         if (this.isImmutable) {
+            val res = result ?: FDBigInteger()
             return if (bitcount == 0) {
-                FDBigInteger(data.copyOf(nWords), offset + wordCount)
+                res.init(data.copyOf(nWords), offset + wordCount)
             } else {
                 val anticount = 32 - bitcount
                 val idx = nWords - 1
@@ -154,7 +178,7 @@ internal class FDBigInteger {
                     result = IntArray(nWords)
                 }
                 leftShift(data, idx, result, bitcount, anticount, prev)
-                FDBigInteger(result, offset + wordCount)
+                res.init(result, offset + wordCount)
             }
         }
 
@@ -330,24 +354,25 @@ internal class FDBigInteger {
      * @param p2 The exponent of the power-of-two factor.
      * @return The multiplication result.
      */
-    fun multByPow52(p5: Int, p2: Int): FDBigInteger {
+    fun multByPow52(p5: Int, p2: Int, result: FDBigInteger? = null): FDBigInteger {
         if (this.nWords == 0) return this
         var res = this
         if (p5 != 0) {
+            val result = result ?: FDBigInteger()
             val r: IntArray
             val extraSize = if ((p2 != 0)) 1 else 0
             if (p5 < SMALL_5_POW.size) {
                 r = IntArray(this.nWords + 1 + extraSize)
-                mult(this.data, this.nWords, SMALL_5_POW[p5], r)
-                res = FDBigInteger(r, this.offset)
+                mult(this.data, this.nWords, SMALL_5_POW[p5], dst = r)
+                res = result.init(r, this.offset)
             } else {
                 val pow5 = big5pow(p5)
                 r = IntArray(this.nWords + pow5.size() + extraSize)
-                mult(this.data, this.nWords, pow5.data, pow5.nWords, r)
-                res = FDBigInteger(r, this.offset + pow5.offset)
+                mult(this.data, this.nWords, pow5.data, pow5.nWords, dst = r)
+                res = result.init(r, this.offset + pow5.offset)
             }
         }
-        return res.leftShift(p2)
+        return res.leftShift(p2, result = result)
     }
 
     /**
@@ -359,9 +384,9 @@ internal class FDBigInteger {
      * @param subtrahend The `FDBigInteger` to be subtracted.
      * @return This `FDBigInteger` less the subtrahend.
      */
-    fun leftInplaceSub(subtrahend: FDBigInteger): FDBigInteger {
+    fun leftInplaceSub(subtrahend: FDBigInteger, result: FDBigInteger? = null): FDBigInteger {
         val minuend = when {
-            this.isImmutable -> FDBigInteger(data.copyOf(), this.offset)
+            this.isImmutable -> (result ?: FDBigInteger()).init(data.copyOf(), this.offset)
             else -> this
         }
         var offsetDiff = subtrahend.offset - minuend.offset
@@ -416,12 +441,13 @@ internal class FDBigInteger {
      * @param subtrahend The `FDBigInteger` to be subtracted.
      * @return This `FDBigInteger` less the subtrahend.
      */
-    fun rightInplaceSub(subtrahend: FDBigInteger): FDBigInteger {
-        var ste = subtrahend
-        val minuend = this
-        if (ste.isImmutable) {
-            ste = FDBigInteger(ste.data.copyOf(), ste.offset)
+    fun rightInplaceSub(subtrahend: FDBigInteger, result: FDBigInteger? = null): FDBigInteger {
+        val ste = when {
+            subtrahend.isImmutable -> (result ?: FDBigInteger())
+                .init(subtrahend.data.copyOf(), subtrahend.offset)
+            else -> subtrahend
         }
+        val minuend = this
         var offsetDiff = minuend.offset - ste.offset
         var sData = ste.data
         val mData = minuend.data
@@ -449,8 +475,8 @@ internal class FDBigInteger {
 
         if (assertionsEnabled) {
             require(minLen == minuend.nWords)
-            require(subtrahend.offset + subtrahend.data.size >= minuend.size())
-            require(offsetDiff == minuend.offset - subtrahend.offset)
+            require(ste.offset + ste.data.size >= minuend.size())
+            require(offsetDiff == minuend.offset - ste.offset)
             require(0 <= offsetDiff && offsetDiff + minLen <= sData.size)
         }
 
@@ -774,6 +800,8 @@ internal class FDBigInteger {
     }
 
     companion object {
+        private val emptyIntArray = IntArray(0)
+
         val SMALL_5_POW: IntArray = run {
             var n = 1
             IntArray(14) {
@@ -861,11 +889,12 @@ internal class FDBigInteger {
          * @param p2 The exponent of the power-of-two factor.
          * @return `value * 5^p5 * 2^p2`
          */
-        fun valueOfMulPow52(value: Long, p5: Int, p2: Int): FDBigInteger {
+        fun valueOfMulPow52(value: Long, p5: Int, p2: Int, result: FDBigInteger? = null): FDBigInteger {
             var v0 = value.toInt()
             var v1 = (value ushr 32).toInt()
             val wordCount = p2 shr 5
             val bitcount = p2 and 0x1f
+            val result = result ?: FDBigInteger()
             if (p5 != 0) {
                 if (p5 < SMALL_5_POW.size) {
                     val pow5 = SMALL_5_POW[p5].toLong() and LONG_MASK
@@ -876,9 +905,9 @@ internal class FDBigInteger {
                     v1 = carry.toInt()
                     val v2 = (carry ushr 32).toInt()
                     return if (bitcount == 0) {
-                        FDBigInteger(intArrayOf(v0, v1, v2), wordCount)
+                        result.init(intArrayOf(v0, v1, v2), wordCount)
                     } else {
-                        FDBigInteger(
+                        result.init(
                             intArrayOf(
                                 v0 shl bitcount,
                                 (v1 shl bitcount) or (v0 ushr (32 - bitcount)),
@@ -897,13 +926,13 @@ internal class FDBigInteger {
                         r = IntArray(pow5.nWords + 2 + (if ((p2 != 0)) 1 else 0))
                         mult(pow5.data, pow5.nWords, v0, v1, r)
                     }
-                    return FDBigInteger(r, pow5.offset).leftShift(p2)
+                    return result.init(r, pow5.offset).leftShift(p2)
                 }
             } else if (p2 != 0) {
                 return if (bitcount == 0) {
-                    FDBigInteger(intArrayOf(v0, v1), wordCount)
+                    result.init(intArrayOf(v0, v1), wordCount)
                 } else {
-                    FDBigInteger(
+                    result.init(
                         intArrayOf(
                             v0 shl bitcount,
                             (v1 shl bitcount) or (v0 ushr (32 - bitcount)),
@@ -912,7 +941,7 @@ internal class FDBigInteger {
                     )
                 }
             }
-            return FDBigInteger(intArrayOf(v0, v1), 0)
+            return result.init(intArrayOf(v0, v1), 0)
         }
 
         /**

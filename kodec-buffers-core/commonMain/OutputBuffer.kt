@@ -20,6 +20,12 @@ interface OutputBuffer {
         }
     }
 
+    fun putBytes(pos: Int, bytes: ByteArray, startIndex: Int = 0, endIndex: Int = bytes.size) {
+        for (i in startIndex ..< endIndex) {
+            set(pos + i - startIndex, bytes[i])
+        }
+    }
+
     fun fill(byte: Int, start: Int = 0, endExclusive: Int = size) {
         for (pos in start until endExclusive) {
             set(pos, byte)

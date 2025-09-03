@@ -16,6 +16,11 @@ import kotlin.jvm.JvmStatic
  * `float` or a `double`.
  */
 object FloatingDecimalParsing {
+    const val MAX_DIGITS: Int = 128
+
+    private const val MIN_DECIMAL_EXPONENT: Int = -324
+    private const val BIG_DECIMAL_EXPONENT: Int = 324 // i.e. abs(MIN_DECIMAL_EXPONENT)
+
     @Throws(NumberFormatException::class)
     fun parseDouble(s: String): Double = readString(s).doubleValue()
 
@@ -93,13 +98,19 @@ object FloatingDecimalParsing {
                     i++
                 }
                 'N'.code -> {
-                    if (input[i + 1] != 'a'.code || input[i + 2] != 'N'.code) return@parseNumber
+                    if (i + 3 != endExclusive ||
+                        input[i + 1] != 'a'.code ||
+                        input[i + 2] != 'N'.code)
+                        return@parseNumber
                     return NOT_A_NUMBER
                 }
             }
 
             if (input[i] == 'I'.code) {
-                if (!input.equalsRange(Float32Consts.INFINITY_REP_ARRAY, thisOffset = i + 1, otherOffset = 1)) return@parseNumber
+                if (i + Float32Consts.INFINITY_REP_ARRAY.size != endExclusive ||
+                    !input.equalsRange(Float32Consts.INFINITY_REP_ARRAY, thisOffset = i + 1, otherOffset = 1)) {
+                    return@parseNumber
+                }
                 return if (isNegative) NEGATIVE_INFINITY else POSITIVE_INFINITY
             }
 
@@ -134,13 +145,14 @@ object FloatingDecimalParsing {
             while (i < endExclusive) {
                 c = input[i]
                 when (c) {
-                    in '1'.code..'9'.code -> {
-                        digits[nDigits++] = c.toByte()
-                        nTrailZero = 0
-                    }
-                    '0'.code -> {
-                        digits[nDigits++] = c.toByte()
-                        nTrailZero++
+                    in '0'.code..'9'.code -> {
+                        val idx = nDigits++
+                        if (idx >= digits.size) {
+                            onFormatError("number is too long")
+                            return NOT_A_NUMBER
+                        }
+                        digits[idx] = c.toByte()
+                        if (c == '0'.code) nTrailZero++ else nTrailZero = 0
                     }
                     '.'.code -> {
                         if (decSeen) {
@@ -189,7 +201,7 @@ object FloatingDecimalParsing {
                         break
                     }
                 }
-                val expLimit = FloatingDecimalToAscii.BIG_DECIMAL_EXPONENT + nDigits + nTrailZero
+                val expLimit = BIG_DECIMAL_EXPONENT + nDigits + nTrailZero
                 if (expOverflow || expVal > expLimit) {
                     // There is still a chance that the exponent will be safe to use: if it
                     // would eventually decrease due to a negative decExp, and that number
@@ -229,7 +241,13 @@ object FloatingDecimalParsing {
                   input[i] != 'D'.code))
             ) return@parseNumber
 
-            if ((nDigits == 0)) return if (isNegative) NEGATIVE_ZERO else POSITIVE_ZERO
+            if (nDigits == 0 ||
+                // Prevent an extreme negative exponent from causing overflow issues in doubleValue().
+                // Large positive values are handled within doubleValue().
+                decExp < MIN_DECIMAL_EXPONENT)
+            {
+                return if (isNegative) NEGATIVE_ZERO else POSITIVE_ZERO
+            }
 
             buffer.isNegative = isNegative
             buffer.decExponent = decExp

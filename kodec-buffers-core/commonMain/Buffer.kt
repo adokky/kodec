@@ -90,6 +90,7 @@ private fun Buffer.invalidEqualsRangeArgs(
     " (this.size=${this.size}, other.size=${data.size})"
 )
 
+@PublishedApi
 internal fun Buffer.checkRange(start: Int, end: Int) {
     if (start < 0 || end > size || start > end)
         invalidRange(start, end)

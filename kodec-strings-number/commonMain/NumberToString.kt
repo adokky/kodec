@@ -1,5 +1,6 @@
 package io.kodec
 
+import io.kodec.buffers.MutableBuffer
 import io.kodec.buffers.OutputBuffer
 import kotlin.jvm.JvmStatic
 
@@ -36,37 +37,43 @@ object NumberToString {
 
     /** @return number of bytes written (number of characters) */
     @JvmStatic
-    fun putDigits(number: Float, output: OutputBuffer, offset: Int): Int =
-        FloatingDecimalToAscii.getThreadLocalInstance().putDigits(number, output, offset)
+    fun putDigits(value: Float, output: MutableBuffer, offset: Int): Int =
+        FloatToDecimal.putDecimal(output, offset, value)
 
     /** @return number of bytes written (number of characters) */
     @JvmStatic
-    fun putDigits(number: Double, output: OutputBuffer, offset: Int): Int =
-        FloatingDecimalToAscii.getThreadLocalInstance().putDigits(number, output, offset)
+    fun putDigits(value: Double, output: MutableBuffer, offset: Int): Int =
+        DoubleToDecimal.putDecimal(output, offset, value)
 
     /** @return number of bytes written (number of characters) */
     @JvmStatic
-    fun writeDigits(number: Float, writeByte: (Int) -> Unit): Int =
-        FloatingDecimalToAscii.getThreadLocalInstance().writeDigits(number, writeByte)
+    fun writeDigits(value: Float, writeByte: (Int) -> Unit): Int =
+        FloatingDecimalToAscii.getThreadLocalInstance().writeDigits(value, writeByte)
 
     /** @return number of bytes written (number of characters) */
     @JvmStatic
-    fun writeDigits(number: Double, writeByte: (Int) -> Unit): Int =
-        FloatingDecimalToAscii.getThreadLocalInstance().writeDigits(number, writeByte)
+    fun writeDigits(value: Double, writeByte: (Int) -> Unit): Int =
+        FloatingDecimalToAscii.getThreadLocalInstance().writeDigits(value, writeByte)
 
     /** @return number of bytes written (number of digits) */
-    fun putDigits(number: Long, output: OutputBuffer, offset: Int): Int {
-        val buffer = FloatingDecimalToAscii.getThreadLocalInstance().tempBuffer.array
-        val charPos = prepareDigits(buffer, number)
+    fun putDigits(value: Long, output: MutableBuffer, offset: Int): Int {
+        val buffer = FloatingDecimalToAscii.getThreadLocalInstance().buffer.array
+        val charPos = prepareDigits(buffer, value)
         return writeBufferReversed(output, buffer, charPos, offset)
     }
 
     /** @return number of bytes written (number of digits) */
-    fun putDigits(number: Int, output: OutputBuffer, offset: Int): Int {
-        val buffer = FloatingDecimalToAscii.getThreadLocalInstance().tempBuffer.array
-        val charPos = prepareDigits(buffer, number)
+    fun putDigits(value: Int, output: MutableBuffer, offset: Int): Int {
+        val buffer = FloatingDecimalToAscii.getThreadLocalInstance().buffer.array
+        val charPos = prepareDigits(buffer, value)
         return writeBufferReversed(output, buffer, charPos, offset)
     }
+
+    @JvmStatic
+    fun toString(v: Float): String = FloatToDecimal.toString(v, null)
+
+    @JvmStatic
+    fun toString(v: Double): String = DoubleToDecimal.toString(v, null)
 
     @PublishedApi
     internal inline fun writeBufferReversed(writeByte: (Byte) -> Unit, source: ByteArray, charPos: Int): Int {
@@ -79,23 +86,23 @@ object NumberToString {
     }
 
     /** @return number of bytes written (number of digits) */
-    inline fun writeDigits(number: Long, writeByte: (Byte) -> Unit): Int {
-        val buffer = FloatingDecimalToAscii.getThreadLocalInstance().tempBuffer.array
-        val charPos = prepareDigits(buffer, number)
+    inline fun writeDigits(value: Long, writeByte: (Byte) -> Unit): Int {
+        val buffer = FloatingDecimalToAscii.getThreadLocalInstance().buffer.array
+        val charPos = prepareDigits(buffer, value)
         return writeBufferReversed(writeByte, buffer, charPos)
     }
 
     /** @return number of bytes written (number of digits) */
-    inline fun writeDigits(number: Int, writeByte: (Byte) -> Unit): Int {
-        val buffer = FloatingDecimalToAscii.getThreadLocalInstance().tempBuffer.array
-        val charPos = prepareDigits(buffer, number)
+    inline fun writeDigits(value: Int, writeByte: (Byte) -> Unit): Int {
+        val buffer = FloatingDecimalToAscii.getThreadLocalInstance().buffer.array
+        val charPos = prepareDigits(buffer, value)
         return writeBufferReversed(writeByte, buffer, charPos)
     }
 
     /** @return first char index of resulting string in [buffer] */
     @PublishedApi
-    internal fun prepareDigits(buffer: ByteArray, number: Long): Int {
-        var n = number
+    internal fun prepareDigits(buffer: ByteArray, value: Long): Int {
+        var n = value
         if (n >= 0L) n = -n
 
         var charPos = buffer.size
@@ -126,15 +133,15 @@ object NumberToString {
             buffer[--charPos] = (48 - q2).toByte()
         }
 
-        if (number < 0L) buffer[--charPos] = 45
+        if (value < 0L) buffer[--charPos] = 45
 
         return charPos
     }
 
     /** @return first char index of resulting string in [buffer] */
     @PublishedApi
-    internal fun prepareDigits(buffer: ByteArray, number: Int): Int {
-        var n = number
+    internal fun prepareDigits(buffer: ByteArray, value: Int): Int {
+        var n = value
         if (n >= 0L) n = -n
 
         var charPos = buffer.size
@@ -156,7 +163,7 @@ object NumberToString {
             buffer[--charPos] = (48 - q).toByte()
         }
 
-        if (number < 0) buffer[--charPos] = 45
+        if (value < 0) buffer[--charPos] = 45
 
         return charPos
     }

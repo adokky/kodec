@@ -1,5 +1,6 @@
 package io.kodec
 
+import io.kodec.FloatingDecimalParsing.MAX_DIGITS
 import karamel.utils.asInt
 import kotlin.jvm.JvmStatic
 import kotlin.math.max
@@ -15,7 +16,12 @@ internal class StringToFpBuffer: StringToFpConverter {
     var isNegative: Boolean = false
     var decExponent: Int = 0
     var nDigits: Int = 0
-    val digits = ByteArray(30)
+    val digits = ByteArray(MAX_DIGITS)
+
+    private val bigD0Temp = FDBigInteger()
+    private val bigDTemp = FDBigInteger()
+    private val bigBTemp = FDBigInteger()
+    private val diffTemp = FDBigInteger()
 
     /**
      * Takes a FloatingDecimal, which we presumably just scanned in,
@@ -26,12 +32,12 @@ internal class StringToFpBuffer: StringToFpConverter {
      * for a single-precision float.
      */
     override fun doubleValue(): Double {
-        val kDigits = min(nDigits.toDouble(), (FloatingDecimalToAscii.MAX_DECIMAL_DIGITS + 1).toDouble())
+        val kDigits = min(nDigits.toDouble(), (MAX_DECIMAL_DIGITS + 1).toDouble())
             .toInt()
         // convert the lead kDigits to a long integer.
         // (special performance hack: start to do it using int)
         var iValue = digits[0].asInt() - '0'.code
-        val iDigits = min(kDigits.toDouble(), FloatingDecimalToAscii.INT_DECIMAL_DIGITS.toDouble())
+        val iDigits = min(kDigits.toDouble(), INT_DECIMAL_DIGITS.toDouble())
             .toInt()
         for (i in 1 until iDigits) {
             iValue = iValue * 10 + digits[i].asInt() - '0'.code
@@ -46,7 +52,7 @@ internal class StringToFpBuffer: StringToFpConverter {
         // lValue now contains a long integer with the value of
         // the first kDigits digits of the number.
         // dValue contains the (double) of the same.
-        if (nDigits <= FloatingDecimalToAscii.MAX_DECIMAL_DIGITS) {
+        if (nDigits <= MAX_DECIMAL_DIGITS) {
             // possibly an easy case.
             // We know that the digits can be represented
             // exactly. And if the exponent isn't too outrageous,
@@ -64,7 +70,7 @@ internal class StringToFpBuffer: StringToFpConverter {
                     val rValue = dValue * SMALL_10_POW[exp]
                     return if (isNegative) -rValue else rValue
                 }
-                val slop = FloatingDecimalToAscii.MAX_DECIMAL_DIGITS - kDigits
+                val slop = MAX_DECIMAL_DIGITS - kDigits
                 if (exp <= MAX_SMALL_TEN + slop) {
                     // We can multiply dValue by 10^(slop)
                     // and it is still "small" and exact.
@@ -91,7 +97,7 @@ internal class StringToFpBuffer: StringToFpConverter {
         // Start by approximating the right answer by,
         // naively, scaling by powers of 10.
         if (exp > 0) {
-            if (decExponent > FloatingDecimalToAscii.MAX_DECIMAL_EXPONENT + 1) {
+            if (decExponent > MAX_DECIMAL_EXPONENT + 1) {
                 // Let's face it. This is going to be Infinity.
                 return if (isNegative) Double.NEGATIVE_INFINITY else Double.POSITIVE_INFINITY
             }
@@ -132,7 +138,7 @@ internal class StringToFpBuffer: StringToFpConverter {
             }
         } else if (exp < 0) {
             exp = -exp
-            if (decExponent < FloatingDecimalToAscii.MIN_DECIMAL_EXPONENT - 1) {
+            if (decExponent < MIN_DECIMAL_EXPONENT - 1) {
                 // Let's face it. This is going to be zero.
                 return if (isNegative) -0.0 else 0.0
             }
@@ -174,18 +180,19 @@ internal class StringToFpBuffer: StringToFpConverter {
         // with FDBigInteger arithmetic.
         // Formulate the EXACT big-number result as
         // bigD0 * 10^exp
-        if (nDigits > FloatingDecimalToAscii.MAX_NDIGITS) {
-            nDigits = FloatingDecimalToAscii.MAX_NDIGITS + 1
-            digits[FloatingDecimalToAscii.MAX_NDIGITS] = '1'.code.toByte()
+        if (nDigits > MAX_NDIGITS) {
+            nDigits = MAX_NDIGITS + 1
+            digits[MAX_NDIGITS] = '1'.code.toByte()
         }
 
-        var bigD0 = FDBigInteger(lValue, digits, kDigits, nDigits)
-        exp = decExponent - nDigits
+        var bigD0 = bigD0Temp.mutable().init(lValue, digits, kDigits, nDigits)
 
+        exp = decExponent - nDigits
         var ieeeBits: Long = dValue.toRawBits() // IEEE-754 bits of double candidate
         val B5 = max(0.0, -exp.toDouble()).toInt() // powers of 5 in bigB, value is not modified inside correctionLoop
         val D5 = max(0.0, exp.toDouble()).toInt() // powers of 5 in bigD, value is not modified inside correctionLoop
-        bigD0 = bigD0.multByPow52(D5, 0)
+
+        bigD0 = bigD0.multByPow52(D5, 0, result = bigD0)
         bigD0.isImmutable = true
         // prevent bigD0 modification inside correctionLoop
         var bigD: FDBigInteger? = null
@@ -193,21 +200,21 @@ internal class StringToFpBuffer: StringToFpConverter {
 
         correctionLoop@ while (true) {
             // here ieeeBits can't be NaN, Infinity or zero
-            var binexp = (ieeeBits ushr FloatingDecimalToAscii.EXP_SHIFT).toInt()
+            var binexp = (ieeeBits ushr EXP_SHIFT).toInt()
             var bigBbits = ieeeBits and Float64Consts.SIGNIF_BIT_MASK
             if (binexp > 0) {
-                bigBbits = bigBbits or FloatingDecimalToAscii.FRACT_HOB
+                bigBbits = bigBbits or FRACT_HOB
             } else { // Normalize denormalized numbers.
                 val leadingZeros: Int = bigBbits.countLeadingZeroBits()
-                val shift = leadingZeros - (63 - FloatingDecimalToAscii.EXP_SHIFT)
+                val shift = leadingZeros - (63 - EXP_SHIFT)
                 bigBbits = bigBbits shl shift
                 binexp = 1 - shift
             }
             binexp -= Float64Consts.EXP_BIAS
             val lowOrderZeros: Int = bigBbits.countTrailingZeroBits()
             bigBbits = bigBbits ushr lowOrderZeros
-            val bigIntExp = binexp - FloatingDecimalToAscii.EXP_SHIFT + lowOrderZeros
-            val bigIntNBits = FloatingDecimalToAscii.EXP_SHIFT + 1 - lowOrderZeros
+            val bigIntExp = binexp - EXP_SHIFT + lowOrderZeros
+            val bigIntNBits = EXP_SHIFT + 1 - lowOrderZeros
 
             // Scale bigD, bigB appropriately for
             // big-integer operations.
@@ -245,9 +252,9 @@ internal class StringToFpBuffer: StringToFpConverter {
             D2 -= common2
             Ulp2 -= common2
             // do multiplications by powers of 5 and 2
-            val bigB: FDBigInteger = FDBigInteger.valueOfMulPow52(bigBbits, B5, B2)
+            val bigB: FDBigInteger = FDBigInteger.valueOfMulPow52(bigBbits, B5, B2, result = bigBTemp.mutable())
             if (bigD == null || prevD2 != D2) {
-                bigD = bigD0.leftShift(D2)
+                bigD = bigD0.leftShift(D2, result = bigDTemp.mutable())
                 prevD2 = D2
             }
 
@@ -263,12 +270,13 @@ internal class StringToFpBuffer: StringToFpConverter {
             // is less than halfUlp, then we're satisfied. Otherwise,
             // use the ratio of difference to halfUlp to calculate a fudge
             // factor to add to the floating value, then go around again.
+            diffTemp.mutable()
             var diff: FDBigInteger
             var cmpResult: Int
             val overvalue: Boolean
             if ((bigB.cmp(bigD).also { cmpResult = it }) > 0) {
                 overvalue = true // our candidate is too big.
-                diff = bigB.leftInplaceSub(bigD) // bigB is not user further - reuse
+                diff = bigB.leftInplaceSub(bigD, result = diffTemp) // bigB is not user further - reuse
                 if ((bigIntNBits == 1) && (bigIntExp > -Float64Consts.EXP_BIAS + 1)) {
                     // candidate is a normalized exact power of 2 and
                     // is too big (larger than Double.MIN_NORMAL). We will be subtracting.
@@ -279,12 +287,12 @@ internal class StringToFpBuffer: StringToFpConverter {
                         // rats. Cannot de-scale ulp this far.
                         // must scale diff in other direction.
                         Ulp2 = 0
-                        diff = diff.leftShift(1)
+                        diff = diff.leftShift(1, result = diffTemp)
                     }
                 }
             } else if (cmpResult < 0) {
                 overvalue = false // our candidate is too small.
-                diff = bigD.rightInplaceSub(bigB) // bigB is not user further - reuse
+                diff = bigD.rightInplaceSub(bigB, result = diffTemp) // bigB is not user further - reuse
             } else {
                 // the candidate is exactly right!
                 // this happens with surprising frequency
@@ -332,7 +340,7 @@ internal class StringToFpBuffer: StringToFpConverter {
      * ( because of the preference to a zero low-order bit ).
      */
     override fun floatValue(): Float {
-        val kDigits = min(nDigits.toDouble(), (FloatingDecimalToAscii.SINGLE_MAX_DECIMAL_DIGITS + 1).toDouble()).toInt()
+        val kDigits = min(nDigits.toDouble(), (SINGLE_MAX_DECIMAL_DIGITS + 1).toDouble()).toInt()
 
         // convert the lead kDigits to an integer.
         var iValue = digits[0].asInt() - '0'.code
@@ -345,7 +353,7 @@ internal class StringToFpBuffer: StringToFpConverter {
         // iValue now contains an integer with the value of
         // the first kDigits digits of the number.
         // fValue contains the (float) of the same.
-        if (nDigits <= FloatingDecimalToAscii.SINGLE_MAX_DECIMAL_DIGITS) {
+        if (nDigits <= SINGLE_MAX_DECIMAL_DIGITS) {
             // possibly an easy case.
             // We know that the digits can be represented
             // exactly. And if the exponent isn't too outrageous,
@@ -363,7 +371,7 @@ internal class StringToFpBuffer: StringToFpConverter {
                     fValue *= SINGLE_SMALL_10_POW[exp]
                     return if (isNegative) -fValue else fValue
                 }
-                val slop = FloatingDecimalToAscii.SINGLE_MAX_DECIMAL_DIGITS - kDigits
+                val slop = SINGLE_MAX_DECIMAL_DIGITS - kDigits
                 if (exp <= SINGLE_MAX_SMALL_TEN + slop) {
                     // We can multiply fValue by 10^(slop)
                     // and it is still "small" and exact.
@@ -382,7 +390,7 @@ internal class StringToFpBuffer: StringToFpConverter {
                 }
                 // Else we have a hard case with a negative exp.
             }
-        } else if ((decExponent >= nDigits) && (nDigits + decExponent <= FloatingDecimalToAscii.MAX_DECIMAL_DIGITS)) {
+        } else if ((decExponent >= nDigits) && (nDigits + decExponent <= MAX_DECIMAL_DIGITS)) {
             // In double-precision, this is an exact floating integer.
             // So we can compute to double, then shorten to float
             // with one round, and get the right answer.
@@ -410,7 +418,7 @@ internal class StringToFpBuffer: StringToFpConverter {
         // Scaling uses doubles to avoid overflow/underflow.
         var dValue = fValue.toDouble()
         if (exp > 0) {
-            if (decExponent > FloatingDecimalToAscii.SINGLE_MAX_DECIMAL_EXPONENT + 1) {
+            if (decExponent > SINGLE_MAX_DECIMAL_EXPONENT + 1) {
                 // Let's face it. This is going to be
                 // Infinity. Cut to the chase.
                 return if (isNegative) Float.NEGATIVE_INFINITY else Float.POSITIVE_INFINITY
@@ -428,7 +436,7 @@ internal class StringToFpBuffer: StringToFpConverter {
             }
         } else if (exp < 0) {
             exp = -exp
-            if (decExponent < FloatingDecimalToAscii.SINGLE_MIN_DECIMAL_EXPONENT - 1) {
+            if (decExponent < SINGLE_MIN_DECIMAL_EXPONENT - 1) {
                 // Let's face it. This is going to be
                 // zero. Cut to the chase.
                 return if (isNegative) -0.0f else 0.0f
@@ -453,17 +461,18 @@ internal class StringToFpBuffer: StringToFpConverter {
         // with FDBigInteger arithmetic.
         // Formulate the EXACT big-number result as
         // bigD0 * 10^exp
-        if (nDigits > FloatingDecimalToAscii.SINGLE_MAX_NDIGITS) {
-            nDigits = FloatingDecimalToAscii.SINGLE_MAX_NDIGITS + 1
-            digits[FloatingDecimalToAscii.SINGLE_MAX_NDIGITS] = '1'.code.toByte()
+        if (nDigits > SINGLE_MAX_NDIGITS) {
+            nDigits = SINGLE_MAX_NDIGITS + 1
+            digits[SINGLE_MAX_NDIGITS] = '1'.code.toByte()
         }
-        var bigD0 = FDBigInteger(iValue.toLong(), digits, kDigits, nDigits)
-        exp = decExponent - nDigits
+        var bigD0 = bigD0Temp.mutable().init(iValue.toLong(), digits, kDigits, nDigits)
 
+        exp = decExponent - nDigits
         var ieeeBits: Int = fValue.toRawBits() // IEEE-754 bits of float candidate
         val B5 = max(0.0, -exp.toDouble()).toInt() // powers of 5 in bigB, value is not modified inside correctionLoop
         val D5 = max(0.0, exp.toDouble()).toInt() // powers of 5 in bigD, value is not modified inside correctionLoop
-        bigD0 = bigD0.multByPow52(D5, 0)
+
+        bigD0 = bigD0.multByPow52(D5, 0, result = bigD0)
         bigD0.isImmutable = true
         // prevent bigD0 modification inside correctionLoop
         var bigD: FDBigInteger? = null
@@ -471,21 +480,21 @@ internal class StringToFpBuffer: StringToFpConverter {
 
         correctionLoop@ while (true) {
             // here ieeeBits can't be NaN, Infinity or zero
-            var binexp = ieeeBits ushr FloatingDecimalToAscii.SINGLE_EXP_SHIFT
+            var binexp = ieeeBits ushr SINGLE_EXP_SHIFT
             var bigBbits = ieeeBits and Float32Consts.SIGNIF_BIT_MASK
             if (binexp > 0) {
-                bigBbits = bigBbits or FloatingDecimalToAscii.SINGLE_FRACT_HOB
+                bigBbits = bigBbits or SINGLE_FRACT_HOB
             } else { // Normalize denormalized numbers.
                 val leadingZeros: Int = bigBbits.countLeadingZeroBits()
-                val shift = leadingZeros - (31 - FloatingDecimalToAscii.SINGLE_EXP_SHIFT)
+                val shift = leadingZeros - (31 - SINGLE_EXP_SHIFT)
                 bigBbits = bigBbits shl shift
                 binexp = 1 - shift
             }
             binexp -= Float32Consts.EXP_BIAS
             val lowOrderZeros: Int = bigBbits.countTrailingZeroBits()
             bigBbits = bigBbits ushr lowOrderZeros
-            val bigIntExp = binexp - FloatingDecimalToAscii.SINGLE_EXP_SHIFT + lowOrderZeros
-            val bigIntNBits = FloatingDecimalToAscii.SINGLE_EXP_SHIFT + 1 - lowOrderZeros
+            val bigIntExp = binexp - SINGLE_EXP_SHIFT + lowOrderZeros
+            val bigIntNBits = SINGLE_EXP_SHIFT + 1 - lowOrderZeros
 
             // Scale bigD, bigB appropriately for
             // big-integer operations.
@@ -522,9 +531,9 @@ internal class StringToFpBuffer: StringToFpConverter {
             D2 -= common2
             Ulp2 -= common2
             // do multiplications by powers of 5 and 2
-            val bigB: FDBigInteger = FDBigInteger.valueOfMulPow52(bigBbits.toLong(), B5, B2)
+            val bigB: FDBigInteger = FDBigInteger.valueOfMulPow52(bigBbits.toLong(), B5, B2, result = bigBTemp.mutable())
             if (bigD == null || prevD2 != D2) {
-                bigD = bigD0.leftShift(D2)
+                bigD = bigD0.leftShift(D2, result = bigDTemp.mutable())
                 prevD2 = D2
             }
             // to recap:
@@ -539,12 +548,13 @@ internal class StringToFpBuffer: StringToFpConverter {
             // is less than halfUlp, then we're satisfied. Otherwise,
             // use the ratio of difference to halfUlp to calculate a fudge
             // factor to add to the floating value, then go around again.
+            diffTemp.mutable()
             var diff: FDBigInteger
             var cmpResult: Int
             val overvalue: Boolean
             if ((bigB.cmp(bigD).also { cmpResult = it }) > 0) {
                 overvalue = true // our candidate is too big.
-                diff = bigB.leftInplaceSub(bigD) // bigB is not user further - reuse
+                diff = bigB.leftInplaceSub(bigD, result = diffTemp) // bigB is not user further - reuse
                 if ((bigIntNBits == 1) && (bigIntExp > -Float32Consts.EXP_BIAS + 1)) {
                     // candidate is a normalized exact power of 2 and
                     // is too big (larger than Float.MIN_NORMAL). We will be subtracting.
@@ -555,12 +565,12 @@ internal class StringToFpBuffer: StringToFpConverter {
                         // rats. Cannot de-scale ulp this far.
                         // must scale diff in other direction.
                         Ulp2 = 0
-                        diff = diff.leftShift(1)
+                        diff = diff.leftShift(1, result = diffTemp)
                     }
                 }
             } else if (cmpResult < 0) {
                 overvalue = false // our candidate is too small.
-                diff = bigD.rightInplaceSub(bigB) // bigB is not user further - reuse
+                diff = bigD.rightInplaceSub(bigB, result = diffTemp) // bigB is not user further - reuse
             } else {
                 // the candidate is exactly right!
                 // this happens with surprising frequency
@@ -597,12 +607,12 @@ internal class StringToFpBuffer: StringToFpConverter {
 
     override fun toString(): String = doubleValue().toString()
 
-    companion object {
+    private companion object {
         /**
          * All the positive powers of 10 that can be
          * represented exactly in double/float.
          */
-        @JvmStatic private val SMALL_10_POW = doubleArrayOf(
+        @JvmStatic val SMALL_10_POW = doubleArrayOf(
             1.0e0,
             1.0e1, 1.0e2, 1.0e3, 1.0e4, 1.0e5,
             1.0e6, 1.0e7, 1.0e8, 1.0e9, 1.0e10,
@@ -611,16 +621,37 @@ internal class StringToFpBuffer: StringToFpConverter {
             1.0e21, 1.0e22
         )
 
-        @JvmStatic private val SINGLE_SMALL_10_POW = floatArrayOf(
+        @JvmStatic val SINGLE_SMALL_10_POW = floatArrayOf(
             1.0e0f,
             1.0e1f, 1.0e2f, 1.0e3f, 1.0e4f, 1.0e5f,
             1.0e6f, 1.0e7f, 1.0e8f, 1.0e9f, 1.0e10f
         )
 
-        @JvmStatic private val BIG_10_POW = doubleArrayOf(1e16, 1e32, 1e64, 1e128, 1e256)
-        @JvmStatic private val TINY_10_POW = doubleArrayOf(1e-16, 1e-32, 1e-64, 1e-128, 1e-256)
+        @JvmStatic val BIG_10_POW = doubleArrayOf(1e16, 1e32, 1e64, 1e128, 1e256)
+        @JvmStatic val TINY_10_POW = doubleArrayOf(1e-16, 1e-32, 1e-64, 1e-128, 1e-256)
 
-        @JvmStatic private val MAX_SMALL_TEN = SMALL_10_POW.size - 1
-        @JvmStatic private val SINGLE_MAX_SMALL_TEN = SINGLE_SMALL_10_POW.size - 1
+        @JvmStatic val MAX_SMALL_TEN = SMALL_10_POW.size - 1
+        @JvmStatic val SINGLE_MAX_SMALL_TEN = SINGLE_SMALL_10_POW.size - 1
+
+        // Constants of the implementation;
+        // most are IEEE-754 related.
+        // (There are more really boring constants at the end.)
+        const val EXP_SHIFT: Int = Float64Consts.SIGNIFICAND_WIDTH - 1
+        const val FRACT_HOB: Long = (1L shl EXP_SHIFT) // assumed High-Order bit
+        const val EXP_ONE: Long = (Float64Consts.EXP_BIAS.toLong()) shl EXP_SHIFT // exponent of 1.0
+        const val MAX_SMALL_BIN_EXP: Int = 62
+        const val MIN_SMALL_BIN_EXP: Int = -(63 / 3)
+        const val MAX_DECIMAL_DIGITS: Int = 15
+        const val MAX_DECIMAL_EXPONENT: Int = 308
+        const val MIN_DECIMAL_EXPONENT: Int = -324
+        const val BIG_DECIMAL_EXPONENT: Int = 324 // i.e. abs(MIN_DECIMAL_EXPONENT)
+        const val MAX_NDIGITS: Int = 1100
+        const val SINGLE_EXP_SHIFT: Int = Float32Consts.SIGNIFICAND_WIDTH - 1
+        const val SINGLE_FRACT_HOB: Int = 1 shl SINGLE_EXP_SHIFT
+        const val SINGLE_MAX_DECIMAL_DIGITS: Int = 7
+        const val SINGLE_MAX_DECIMAL_EXPONENT: Int = 38
+        const val SINGLE_MIN_DECIMAL_EXPONENT: Int = -45
+        const val SINGLE_MAX_NDIGITS: Int = 200
+        const val INT_DECIMAL_DIGITS: Int = 9
     }
 }

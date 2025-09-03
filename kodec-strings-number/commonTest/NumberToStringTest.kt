@@ -30,15 +30,15 @@ class NumberToStringTest {
     fun float() {
         val sb = StringBuilder()
         for (num in NumbersDataSet.floats32) {
-            val s = buildString(sb) { FloatingDecimalToAscii.getThreadLocalInstance().appendTo(num, this) }
+            val encoded = buildString(sb) { FloatingDecimalToAscii.getThreadLocalInstance().appendTo(num, this) }
             val decoded = try {
-                s.toFloat()
+                encoded.toFloat()
             } catch (_: NumberFormatException) {
-                fail("expected: $num, actual: '$s'")
+                fail("expected: $num, actual: '$encoded'")
             }
             if (num.isNaN() && decoded.isNaN()) continue
             if (decoded !in (num - 0.0001f..num + 0.0001f))
-                fail("expected: $num, actual: '$s', decoded: $decoded")
+                fail("expected: $num, actual: '$encoded', decoded: $decoded")
         }
     }
 
@@ -46,15 +46,15 @@ class NumberToStringTest {
     fun double() {
         val sb = StringBuilder()
         for (num in NumbersDataSet.floats64) {
-            val s = buildString(sb) { FloatingDecimalToAscii.getThreadLocalInstance().appendTo(num, this) }
+            val encoded = buildString(sb) { FloatingDecimalToAscii.getThreadLocalInstance().appendTo(num, this) }
             val decoded = try {
-                s.toDouble()
+                encoded.toDouble()
             } catch (_: NumberFormatException) {
-                fail("expected: $num, actual: '$s'")
+                fail("expected: $num, actual: '$encoded'")
             }
             if (num.isNaN() && decoded.isNaN()) continue
             if (decoded !in (num - 0.00001..num + 0.00001))
-                fail("expected: $num, actual: '$s', decoded: $decoded")
+                fail("expected: $num, actual: '$encoded', decoded: $decoded")
         }
     }
 }

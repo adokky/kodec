@@ -3,7 +3,6 @@ package io.kodec.buffers
 import karamel.utils.IndexOutOfBoundsException
 import karamel.utils.asInt
 import kotlin.jvm.JvmField
-import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 open class ArrayBuffer(
@@ -77,10 +76,18 @@ open class ArrayBuffer(
         }
     }
 
-    @JvmOverloads
-    fun putBytes(pos: Int, bytes: ArrayBuffer, startIndex: Int = 0, endIndex: Int = bytes.size) {
-        bytes.array.copyInto(this.array,
+    override fun putBytes(pos: Int, bytes: ByteArray, startIndex: Int, endIndex: Int) {
+        bytes.copyInto(this.array,
             destinationOffset = this.start + pos,
+            startIndex = startIndex,
+            endIndex = endIndex
+        )
+    }
+
+    fun putBytes(pos: Int, bytes: ArrayBuffer, startIndex: Int = 0, endIndex: Int = bytes.size) {
+        putBytes(
+            pos = pos,
+            bytes = bytes.array,
             startIndex = bytes.start + startIndex,
             endIndex = bytes.start + endIndex
         )
@@ -180,6 +187,16 @@ open class ArrayBuffer(
 
         @JvmField
         val Empty: ArrayBuffer = emptyByteArray.asArrayBuffer()
+    }
+}
+
+inline fun ArrayBuffer.forEach(start: Int = 0, endExclusive: Int = size, body: (Int) -> Unit) {
+    checkRange(start, endExclusive)
+    val arr = array
+    val i0 = this.start + start
+    val end = this.start + endExclusive
+    for (i in i0..<end) {
+        body(arr[i].asInt())
     }
 }
 

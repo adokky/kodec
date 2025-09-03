@@ -9,7 +9,7 @@ Why not [okio](https://github.com/square/okio) / [kotlinx-io](https://github.com
 Because both of them does not provide a zero-copy array-like abstraction that allows you to wrap anything other than `ByteArray`.
 
 Other notable differences:
-* allocation-free `Float`/`Double` encoding/decoding
+* `Float`/`Double` encoding/decoding with fewer allocations
 * `TextReader` abstraction allows you to implement allocation-free decoding for any text format
 * "template" modules for decoding basic primitives with zero performance impact. Compatible with any data structure.
 * highly modular. Peek only what you want
@@ -49,7 +49,7 @@ The module is compact and intended to be used as a basic memory IO integration l
 
 Convert numbers to string and back (for both stream and random access structures).
   * `Int`,`Long` encoding/decoding
-  * `Float`,`Double` encoding/decoding. 100% Kotlin. Allocation-free port of Java standard library implementation.
+  * `Float`,`Double` encoding/decoding. 100% Kotlin. Port of Java standard library implementation with fewer allocations.
 
 ### `kodec-struct` (experimental)
 
