@@ -36,9 +36,9 @@ class SimpleSubString internal constructor(
     }
 
     internal fun validateRange() {
-        if (start > end || start < 0 || end > source.length) throw IllegalArgumentException(
+        require(start in 0 .. end && end <= source.length) {
             "Invalid range: $start..<$end. Source length: ${source.length}"
-        )
+        }
     }
 
     override fun equals(other: Any?): Boolean {

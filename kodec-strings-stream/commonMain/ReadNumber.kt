@@ -8,7 +8,7 @@ import karamel.utils.BitDescriptors
 import karamel.utils.Bits32
 
 enum class NumberParsingError(override val message: String): DecodingErrorWithMessage {
-    MalformedNumber("expected a number"),
+    MalformedNumber("invalid number format"),
     FloatOverflow("floating-point number is too big"),
     IntegerOverflow("number is out of range ${(Long.MIN_VALUE .. Long.MAX_VALUE)}")
 }

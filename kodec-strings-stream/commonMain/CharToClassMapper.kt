@@ -7,13 +7,13 @@ import kotlin.jvm.JvmInline
 import kotlin.jvm.JvmOverloads
 
 @JvmInline
-value class CharToClassMapper<T: BitDescriptors> private constructor(private val CHAR_TO_BITS: ByteArray) {
+value class CharToClassMapper<T: BitDescriptors> private constructor(private val charToBits: ByteArray) {
     constructor(): this(ByteArray(0xff))
 
     fun putBits(charCode: Int, bits: Bits32<T>) {
         val idx = charCode + 1
-        if (idx !in CHAR_TO_BITS.indices) error("char '${Char(charCode)}' can not be mapped")
-        CHAR_TO_BITS[idx] = bits.toInt().toByte()
+        if (idx !in charToBits.indices) error("char '${Char(charCode)}' can not be mapped")
+        charToBits[idx] = bits.toInt().toByte()
     }
 
     fun putBits(char: Char, bits: Bits32<T>): Unit = putBits(char.code, bits)
@@ -22,7 +22,7 @@ value class CharToClassMapper<T: BitDescriptors> private constructor(private val
     fun getBits(charCode: Int, default: Bits32<T> = Bits32(0)): Bits32<T> {
         val idx = charCode + 1
         var bits = default
-        if (idx in CHAR_TO_BITS.indices) bits = Bits32(CHAR_TO_BITS[idx].asInt())
+        if (idx in charToBits.indices) bits = Bits32(charToBits[idx].asInt())
         return bits
     }
 
