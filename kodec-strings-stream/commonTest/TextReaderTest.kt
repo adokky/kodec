@@ -291,7 +291,7 @@ abstract class AbstractTextReaderTest {
         var ok = false
         reader.readNumberTemplate(
             acceptInt = { fail() },
-            acceptFloat = { assertNearlyEquals(n, it); ok = true }
+            acceptFloat = { assertNearlyEquals(n, it.doubleValue()); ok = true }
         )
         assertTrue(ok, "acceptFloat not called")
     }

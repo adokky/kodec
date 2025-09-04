@@ -3,17 +3,17 @@ package io.kodec.text
 import io.kodec.NumberToString
 import io.kodec.StringsUTF8
 import io.kodec.buffers.ArrayBuffer
-import io.kodec.buffers.OutputBuffer
+import io.kodec.buffers.MutableBuffer
 import io.kodec.buffers.OutputDataBuffer
 
-class BufferTextWriter(output: OutputBuffer): TextWriter {
+class BufferTextWriter(output: MutableBuffer): TextWriter {
     constructor(): this(ArrayBuffer.Empty)
 
-    var output: OutputBuffer = output
+    var output: MutableBuffer = output
         private set
     var position: Int = 0
 
-    fun set(output: OutputBuffer, position: Int = 0) {
+    fun set(output: MutableBuffer, position: Int = 0) {
         this.position = position
         this.output = output
     }
