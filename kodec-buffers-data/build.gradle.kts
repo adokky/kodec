@@ -3,7 +3,7 @@ plugins {
     id("io.github.adokky.quick-publish")
 }
 
-version = "0.9.1"
+version = "0.9.2"
 
 dependencies {
     commonMainApi(project(":kodec-binary-num"))
