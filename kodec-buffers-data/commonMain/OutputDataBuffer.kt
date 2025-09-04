@@ -53,10 +53,6 @@ interface OutputDataBuffer: OutputBuffer {
         return VariableEncoding.writeInt64(value, optimizePositive) { byte -> putInt8(index++, byte) }
     }
 
-    fun putBytes(pos: Int, bytes: ByteArray, bytesOffset: Int = 0, length: Int = bytes.size - bytesOffset) {
-        for (i in 0..<length) putInt8(pos + i, bytes[bytesOffset + i])
-    }
-
     fun putStringUtf16(pos: Int, str: CharSequence, strOffset: Int = 0, endExclusive: Int = str.length): Int {
         var index = pos
         return StringsUTF16.writeBytes(str, strOffset, endExclusive) { byte: Int -> set(index++, byte) }

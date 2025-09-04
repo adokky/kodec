@@ -3,6 +3,7 @@ package io.kodec.buffers
 import karamel.utils.IndexOutOfBoundsException
 import karamel.utils.asInt
 import kotlin.jvm.JvmField
+import kotlin.jvm.JvmName
 import kotlin.jvm.JvmStatic
 
 open class ArrayBuffer(
@@ -84,6 +85,7 @@ open class ArrayBuffer(
         )
     }
 
+    @JvmName("putArrayBuffer")
     fun putBytes(pos: Int, bytes: ArrayBuffer, startIndex: Int = 0, endIndex: Int = bytes.size) {
         putBytes(
             pos = pos,
