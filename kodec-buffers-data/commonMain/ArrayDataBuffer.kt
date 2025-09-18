@@ -84,8 +84,14 @@ fun ByteArray.asDataBuffer(
     byteOrder: ByteOrder = ByteOrder.Native,
     rangeChecks: Boolean = ArrayBuffer.isRangeChacksEnabled
 ): ArrayDataBuffer = when(byteOrder) {
-    ByteOrder.BigEndian -> if (rangeChecks) ArrayDataBufferSafeBE(this, start, endExclusive) else ArrayDataBufferUnsafeBE(this, start, endExclusive)
-    ByteOrder.LittleEndian -> if (rangeChecks) ArrayDataBufferSafeLE(this, start, endExclusive) else ArrayDataBuffer(this, start, endExclusive)
+    ByteOrder.BigEndian -> when {
+        rangeChecks -> ArrayDataBufferSafeBE(this, start, endExclusive)
+        else -> ArrayDataBufferUnsafeBE(this, start, endExclusive)
+    }
+    ByteOrder.LittleEndian -> when {
+        rangeChecks -> ArrayDataBufferSafeLE(this, start, endExclusive)
+        else -> ArrayDataBuffer(this, start, endExclusive)
+    }
     ByteOrder.Native -> asDataBuffer(start, endExclusive, byteOrder = NativeByteOrder, rangeChecks)
 }
 
