@@ -52,7 +52,7 @@ interface Buffer {
 
     companion object {
         @JvmField
-        val Empty: Buffer = ArrayBuffer.Empty
+        val Empty: Buffer = emptyByteArray.asArrayBuffer()
     }
 }
 
