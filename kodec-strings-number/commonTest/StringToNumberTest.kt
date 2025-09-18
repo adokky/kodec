@@ -238,8 +238,6 @@ open class StringToNumberTest {
         // Culled from JCK test lex03691m1
         "0.",
         "1",
-        "0.",
-        "1",
         "0.12",
         "1e-0",
         "12.e+1",

@@ -58,7 +58,17 @@ inline fun <BDS: BitDescriptors> RandomAccessTextReader.readNumberTemplate(
         hasIntDigits = true
     }
 
-    if (nextCodePoint == '.'.code || (allowSpecialFp && !hasIntDigits && isSpecialFpFirstChar(nextCodePoint))) { // Float
+    var hasExponent = false
+    val isFloat = if (nextCodePoint or StringsASCII.LOWER_CASE_BIT == 'e'.code) {
+        readCodePoint()
+        hasExponent = true
+        trySkip('-')
+    } else {
+        nextCodePoint == '.'.code ||
+        (allowSpecialFp && !hasIntDigits && isSpecialFpFirstChar(nextCodePoint))
+    }
+
+    if (isFloat) {
         if (overflow) { onFail(NumberParsingError.FloatOverflow); return }
 
         while (!charClasses.hasClass(nextCodePoint, terminatorClass) && nextCodePoint >= 0) readCodePoint()
@@ -72,33 +82,34 @@ inline fun <BDS: BitDescriptors> RandomAccessTextReader.readNumberTemplate(
         }
 
         acceptFloat(result)
-    } else { // Int
-        if (overflow) { onFail(NumberParsingError.IntegerOverflow); return }
-        if (!hasIntDigits) { onFail(NumberParsingError.MalformedNumber); return }
-        
-        if (nextCodePoint or StringsASCII.LOWER_CASE_BIT == 'e'.code) {
-            readCodePoint()
-            val container = errorContainer.prepare<IntegerParsingError>()
-            accumulator = readLongExponent(accumulator, charClasses, terminatorClass, onFormatError = container)
-            container.consumeError { err ->
-                when(err) {
-                    IntegerParsingError.MalformedNumber -> { onFail(NumberParsingError.MalformedNumber); return }
-                    IntegerParsingError.Overflow -> { onFail(NumberParsingError.IntegerOverflow); return }
-                }
+        return
+    }
+
+    // Int
+    if (overflow) { onFail(NumberParsingError.IntegerOverflow); return }
+    if (!hasIntDigits) { onFail(NumberParsingError.MalformedNumber); return }
+
+    if (hasExponent) {
+        val container = errorContainer.prepare<IntegerParsingError>()
+        accumulator = readLongExponent(accumulator, charClasses, terminatorClass, onFormatError = container)
+        container.consumeError { err ->
+            when(err) {
+                IntegerParsingError.MalformedNumber -> { onFail(NumberParsingError.MalformedNumber); return }
+                IntegerParsingError.Overflow -> { onFail(NumberParsingError.IntegerOverflow); return }
             }
         }
-
-        if (!charClasses.hasClass(nextCodePoint, terminatorClass)) {
-            onFail(NumberParsingError.MalformedNumber)
-            return
-        }
-
-        acceptInt(when {
-            isNegative -> accumulator
-            accumulator != Long.MIN_VALUE -> -accumulator
-            else -> { onFail(NumberParsingError.IntegerOverflow); return }
-        })
     }
+
+    if (!charClasses.hasClass(nextCodePoint, terminatorClass)) {
+        onFail(NumberParsingError.MalformedNumber)
+        return
+    }
+
+    acceptInt(when {
+        isNegative -> accumulator
+        accumulator != Long.MIN_VALUE -> -accumulator
+        else -> { onFail(NumberParsingError.IntegerOverflow); return }
+    })
 }
 
 class ReadNumberResult {

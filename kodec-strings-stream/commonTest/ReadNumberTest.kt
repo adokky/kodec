@@ -2,6 +2,8 @@ package io.kodec.text
 
 import io.kodec.NumbersDataSet
 import karamel.utils.Bits32
+import karamel.utils.enrichMessageOf
+import kotlin.math.sign
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -73,29 +75,37 @@ class ReadNumberTest {
         terminationClasses: Bits32<DefaultCharClasses> = DefaultCharClasses.WORD_TERM
     ) {
         reader.startReadingFrom(input)
-        var double: Double? = null
+        var decoded: Double? = null
         reader.readNumberTemplate(
             acceptInt = { fail("expected acceptFloat() but called acceptInt() for '$input'") },
-            acceptFloat = { double = it.doubleValue() },
+            acceptFloat = { decoded = it.doubleValue() },
             allowSpecialFp = allowSpecial,
             charClasses = DefaultCharClasses.mapper,
             terminatorClass = terminationClasses
         )
-        assertNotNull(double)
-        if (expected.isNaN()) {
-            if (!double.isNaN()) {
-                fail("input='$input'\nexpected NaN\ndecoded=$double")
+        assertNotNull(decoded)
+
+        when {
+            expected.isNaN() -> {
+                if (!decoded.isNaN()) {
+                    fail("input='$input'\nexpected NaN\ndecoded=$decoded")
+                }
             }
-        } else {
-            if (expected !in (double - 0.0001 .. double + 0.0001)) {
-                fail("input='$input'\nexpected=$expected\ndecoded=$double")
+            !expected.isFinite() -> {
+                assertTrue(!decoded.isFinite(), "expected infinity got $decoded")
+                assertEquals(expected.sign, decoded.sign, "infinity has wrong sign")
+            }
+            else -> {
+                if (expected !in (decoded - 0.0001 .. decoded + 0.0001)) {
+                    fail("input='$input'\nexpected=$expected\ndecoded=$decoded")
+                }
             }
         }
 
         reader.startReadingFrom(input)
         result.clear()
         reader.readNumber(result, DefaultCharClasses.mapper, terminationClasses, allowSpecialFp = allowSpecial)
-        assertEquals(double, result.asDouble)
+        assertEquals(decoded, result.asDouble)
         assertEquals(0, result.asLong)
         assertTrue(result.isDouble)
     }
@@ -155,5 +165,78 @@ class ReadNumberTest {
         checkInteger(123, "123/")
         checkInteger(123, "123 ", terminationClasses = DefaultCharClasses.WHITESPACE)
         checkFails("123/", NumberParsingError.MalformedNumber, DefaultCharClasses.WHITESPACE)
+    }
+
+    private val floatStrings = arrayOf(
+        "NaN",
+        "Infinity",
+        "-Infinity",
+        "1.1e-23",
+        ".1e-23",
+        "1e-23",
+
+        // Culled from JCK test lex03591m1
+        "54.07140",
+        "7.01e-324",
+        "2147483647.01",
+        "1.2147483647",
+        "000000000000000000000000001.",
+        "1.00000000000000000000000000e-2",
+
+        // Culled from JCK test lex03592m2
+        "2.",
+        ".0909",
+        "122112217090.0",
+        "7090e-5",
+        "2.E-20",
+        ".0909e42",
+        "122112217090.0E+100",
+        "2.",
+        ".0909",
+        "122112217090.0",
+        "7090e-5",
+        "2.E-20",
+        ".0909e42",
+        "122112217090.0E+100",
+
+        "0.0E-10",
+
+        // Culled from JCK test lex03691m1
+        "0.",
+        "0.12",
+        "1e-0",
+        "12.e+1",
+        "0e-0",
+        "12.e+01",
+        "1e-01",
+
+        "1.7976931348623157E308",  // Double.MAX_VALUE
+        "4.9e-324",  // Double.MIN_VALUE
+        "2.2250738585072014e-308",  // Double.MIN_NORMAL
+
+        "2.2250738585072012e-308",  // near Double.MIN_NORMAL
+
+        "1.7976931348623158e+308",  // near MAX_VALUE + ulp(MAX_VALUE)/2
+        "1.7976931348623159e+308",  // near MAX_VALUE + ulp(MAX_VALUE)
+
+        "2.4703282292062329e-324",  // above MIN_VALUE/2
+        "2.4703282292062327e-324",  // MIN_VALUE/2
+        "2.4703282292062325e-324",  // below MIN_VALUE/2
+
+        // 1e308 with leading zeros
+        "0.0000000000001e321",
+        "00.000000000000000001e326",
+        "00000.000000000000000001e326",
+        "000.0000000000000000001e327",
+        "0.00000000000000000001e328",
+    )
+
+    @Test
+    fun floats() {
+        for (fstring in floatStrings) {
+            enrichMessageOf<Throwable>({ fstring }) {
+                checkFloat(expected = fstring.toDouble(), input = fstring, allowSpecial = true)
+            }
+        }
     }
 }
