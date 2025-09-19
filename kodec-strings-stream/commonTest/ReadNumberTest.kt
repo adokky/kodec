@@ -142,7 +142,7 @@ class ReadNumberTest {
         ).forEach { checkFails(it, NumberParsingError.MalformedNumber) }
 
         val array = arrayOf(
-            "-9223372036854775809L", //  Long.MIN_VALUE - 1
+            "-9223372036854775809", //  Long.MIN_VALUE - 1
             (Long.MAX_VALUE.toULong() + 1uL).toString(),
             ULong.MAX_VALUE.toString(),
             "100000000000000000000",
@@ -233,10 +233,33 @@ class ReadNumberTest {
 
     @Test
     fun floats() {
-        for (fstring in floatStrings) {
-            enrichMessageOf<Throwable>({ fstring }) {
-                checkFloat(expected = fstring.toDouble(), input = fstring, allowSpecial = true)
+        for (string in floatStrings) {
+            enrichMessageOf<Throwable>({ string }) {
+                checkFloat(expected = string.toDouble(), input = string, allowSpecial = true)
             }
         }
+    }
+
+    @Test
+    fun overflows() {
+        fun check(input: String, expected: NumberParsingError) {
+            reader.startReadingFrom(input)
+            val errorContainer = reader.errorContainer.prepare<NumberParsingError>()
+            reader.readNumber(
+                result.clear(),
+                onFail = errorContainer,
+                charClasses = DefaultCharClasses.mapper,
+                terminatorClass = DefaultCharClasses.WORD_TERM
+            )
+            assertEquals(expected, errorContainer.consumeError())
+            assertEquals(input.length, reader.position)
+        }
+
+        check("99999999999999999999999.9999999999999999999999", NumberParsingError.FloatOverflow)
+        check("9223372036854775809.0", NumberParsingError.FloatOverflow)
+        check("-9223372036854775810.0", NumberParsingError.FloatOverflow)
+        check("9223372036854775809", NumberParsingError.IntegerOverflow)
+        check("-9223372036854775810", NumberParsingError.IntegerOverflow)
+        check("1e20", NumberParsingError.IntegerOverflow)
     }
 }

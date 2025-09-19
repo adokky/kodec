@@ -69,8 +69,6 @@ inline fun <BDS: BitDescriptors> RandomAccessTextReader.readNumberTemplate(
     }
 
     if (isFloat) {
-        if (overflow) { onFail(NumberParsingError.FloatOverflow); return }
-
         while (!charClasses.hasClass(nextCodePoint, terminatorClass) && nextCodePoint >= 0) readCodePoint()
 
         val result = parseFloat(start, position, onFormatError = errorContainer.prepare())
@@ -81,12 +79,11 @@ inline fun <BDS: BitDescriptors> RandomAccessTextReader.readNumberTemplate(
             return
         }
 
-        acceptFloat(result)
+        if (overflow) onFail(NumberParsingError.FloatOverflow) else acceptFloat(result)
         return
     }
 
     // Int
-    if (overflow) { onFail(NumberParsingError.IntegerOverflow); return }
     if (!hasIntDigits) { onFail(NumberParsingError.MalformedNumber); return }
 
     if (hasExponent) {
@@ -95,7 +92,7 @@ inline fun <BDS: BitDescriptors> RandomAccessTextReader.readNumberTemplate(
         container.consumeError { err ->
             when(err) {
                 IntegerParsingError.MalformedNumber -> { onFail(NumberParsingError.MalformedNumber); return }
-                IntegerParsingError.Overflow -> { onFail(NumberParsingError.IntegerOverflow); return }
+                IntegerParsingError.Overflow -> { overflow = true }
             }
         }
     }
@@ -105,7 +102,7 @@ inline fun <BDS: BitDescriptors> RandomAccessTextReader.readNumberTemplate(
         return
     }
 
-    acceptInt(when {
+    if (overflow) onFail(NumberParsingError.IntegerOverflow) else acceptInt(when {
         isNegative -> accumulator
         accumulator != Long.MIN_VALUE -> -accumulator
         else -> { onFail(NumberParsingError.IntegerOverflow); return }
