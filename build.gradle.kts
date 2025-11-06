@@ -1,4 +1,5 @@
 plugins {
+    kotlin("multiplatform") version libs.versions.kotlin apply false
     id("io.github.adokky.quick-mpp") version libs.versions.quickMpp apply false
     id("io.github.adokky.quick-publish") version libs.versions.quickMpp apply false
 }

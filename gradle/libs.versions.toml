@@ -1,5 +1,6 @@
 [versions]
-quickMpp = "0.18"
+kotlin = "2.2.21"
+quickMpp = "0.20"
 equalsTester = "0.13"
 karamelUtils = "0.1.1"
 bitvector = "0.9.2"
