@@ -3,7 +3,6 @@ package io.kodec.text
 import io.kodec.StringHashCode
 import io.kodec.StringsUTF16
 import io.kodec.buffers.asArrayBuffer
-import karamel.utils.assertionsEnabled
 
 @Suppress("EqualsOrHashCode")
 class RandomAccessTextReaderSubString(
@@ -31,18 +30,34 @@ class RandomAccessTextReaderSubString(
         codePoints: Int,
         hashCode: Int = 0
     ) {
+        setUnchecked(
+            reader = reader,
+            start = start,
+            end = end,
+            codePoints = codePoints,
+            hashCode = hashCode,
+        )
+
+        validate()
+    }
+
+    fun setUnchecked(
+        reader: RandomAccessTextReader,
+        start: Int,
+        end: Int,
+        codePoints: Int,
+        hashCode: Int = 0
+    ) {
         resetCache(hashCode)
 
         this.reader = reader
         this.start = start
         this.end = end
         this.codePoints = codePoints
-
-        if (assertionsEnabled) validate()
     }
 
     override fun clear() {
-        set(StringTextReader.Empty, 0, 0, 0)
+        setUnchecked(StringTextReader.Empty, 0, 0, 0)
     }
 
     override fun toLong(): Long = reader.readLong(start)

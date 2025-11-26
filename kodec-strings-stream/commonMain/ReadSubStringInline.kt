@@ -17,7 +17,7 @@ inline fun RandomAccessTextReader.readSubStringInline(dest: RandomAccessTextRead
             true
         } else false
     }
-    dest.set(
+    dest.setUnchecked(
         reader = this,
         start = start,
         end = position,

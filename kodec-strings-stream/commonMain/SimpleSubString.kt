@@ -1,10 +1,9 @@
 package io.kodec.text
 
+import dev.dokky.pool.use
 import io.kodec.StringHashCode
 import io.kodec.toDouble
 import io.kodec.toFloat
-import karamel.utils.assertionsEnabled
-import dev.dokky.pool.use
 import kotlin.jvm.JvmStatic
 
 @Suppress("EqualsOrHashCode")
@@ -26,13 +25,16 @@ class SimpleSubString internal constructor(
     }
 
     fun set(source: CharSequence, start: Int = 0, end: Int = source.length, hashCode: Int = 0) {
+        setUnchecked(source = source, start = start, end = end, hashCode = hashCode)
+        validateRange()
+    }
+
+    fun setUnchecked(source: CharSequence, start: Int = 0, end: Int = source.length, hashCode: Int = 0) {
         resetCache(hashCode)
 
         this.source = source
         this.start = start
         this.end = end
-
-        if (assertionsEnabled) validateRange()
     }
 
     internal fun validateRange() {
