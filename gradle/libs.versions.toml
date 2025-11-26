@@ -1,14 +1,10 @@
 [versions]
 kotlin = "2.2.21"
-quickMpp = "0.20"
-equalsTester = "0.13"
-karamelUtils = "0.1.1"
-bitvector = "0.9.2"
-objectPool = "1.0"
+quickMpp = "0.21"
 
 [libraries]
-objectPool = { module = "io.github.adokky:object-pool", version.ref = "objectPool" }
-bitvector = { module = "io.github.adokky:bitvector", version.ref = "bitvector" }
-equalsTester = { module = "io.github.adokky:equals-tester", version.ref = "equalsTester" }
-karamelUtils-core = { module = "io.github.adokky:karamel-utils-core", version.ref = "karamelUtils" }
-karamelUtils-tsbits = { module = "io.github.adokky:karamel-utils-ts-bits", version.ref = "karamelUtils" }
+objectPool = { module = "io.github.adokky:object-pool", version = "1.0" }
+bitvector = { module = "io.github.adokky:bitvector", version = "0.9.2" }
+equalsTester = { module = "io.github.adokky:equals-tester", version = "1.1.0" }
+karamelUtils-core = { module = "io.github.adokky:karamel-utils-core", version = "0.2.0" }
+karamelUtils-tsbits = { module = "io.github.adokky:karamel-utils-ts-bits", version = "0.1.1" }
