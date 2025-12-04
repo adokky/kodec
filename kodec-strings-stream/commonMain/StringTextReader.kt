@@ -35,6 +35,22 @@ open class StringTextReader(input: CharSequence = ""): RandomAccessTextReader() 
         return code
     }
 
+    override fun readCodePoint(position: Int): CodePointAndSize {
+        var pos = position
+        if (pos >= input.length) return CodePointAndSize.EOF
+
+        val c1 = input[pos++]
+        var code = c1.code
+
+        if (c1.isHighSurrogate()) {
+            if (pos >= input.length) return CodePointAndSize.INVALID
+            code = StringsUTF16.codePoint(code, input[pos and 0x7f_ff_ff_ff].code)
+            pos++
+        }
+
+        return CodePointAndSize(code, size = pos - position)
+    }
+
     override fun readNextAsciiCode(): Int {
         val pos = nextPosition
         return if (pos >= input.length) -1 else {

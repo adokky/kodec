@@ -28,6 +28,36 @@ open class Utf8TextReader(buffer: Buffer = Buffer.Empty): RandomAccessTextReader
     override fun readAsciiCode(position: Int): Int =
         if (position >= buffer.size) -1 else buffer[position]
 
+    override fun readCodePoint(position: Int): CodePointAndSize {
+        val buffer = buffer
+
+        if (position >= buffer.size) return CodePointAndSize.EOF
+
+        val firstByte = buffer[position]
+        return when {
+            firstByte < 128 -> CodePointAndSize(firstByte, 1)
+            else -> readCodePointByte2(position + 1, firstByte)
+        }
+    }
+
+    private fun readCodePointByte2(pos: Int, firstByte: Int): CodePointAndSize = when {
+        !firstByte.is_header_2_bytes() -> readCodePointByte3(pos, firstByte)
+        pos >= buffer.size -> CodePointAndSize.INVALID
+        else -> CodePointAndSize(StringsUTF8.codePoint(firstByte, buffer[pos]), 2)
+    }
+
+    private fun readCodePointByte3(pos: Int, firstByte: Int): CodePointAndSize = when {
+        !firstByte.is_header_3_bytes() -> readCodePointByte4(pos, firstByte)
+        pos + 1 >= buffer.size -> CodePointAndSize.INVALID
+        else -> CodePointAndSize(StringsUTF8.codePoint(firstByte, buffer[pos], buffer[pos + 1]), 3)
+    }
+
+    private fun readCodePointByte4(pos: Int, firstByte: Int): CodePointAndSize = when {
+        firstByte.is_header_4_bytes() && pos + 2 < buffer.size ->
+            CodePointAndSize(StringsUTF8.codePoint(firstByte, buffer[pos], buffer[pos + 1], buffer[pos + 2]), 4)
+        else -> CodePointAndSize.INVALID
+    }
+
     override fun readNextCodePoint(): Int {
         val buffer = buffer
 
@@ -37,11 +67,11 @@ open class Utf8TextReader(buffer: Buffer = Buffer.Empty): RandomAccessTextReader
         val firstByte = buffer[pos]
         nextPosition = pos + 1
 
-        return if (firstByte < 128) firstByte else readCodePoint2Bytes(firstByte)
+        return if (firstByte < 128) firstByte else readCodePointByte2(firstByte)
     }
 
-    private fun readCodePoint2Bytes(firstByte: Int): Int {
-        if (!firstByte.is_header_2_bytes()) return readCodePoint3Bytes(firstByte)
+    private fun readCodePointByte2(firstByte: Int): Int {
+        if (!firstByte.is_header_2_bytes()) return readCodePointByte3(firstByte)
 
         val pos = nextPosition
         if (pos >= buffer.size) return StringsASCII.INVALID_BYTE_PLACEHOLDER.code
@@ -49,8 +79,8 @@ open class Utf8TextReader(buffer: Buffer = Buffer.Empty): RandomAccessTextReader
         return StringsUTF8.codePoint(firstByte, buffer[pos])
     }
 
-    private fun readCodePoint3Bytes(firstByte: Int): Int {
-        if (!firstByte.is_header_3_bytes()) return readCodePoint4Bytes(firstByte)
+    private fun readCodePointByte3(firstByte: Int): Int {
+        if (!firstByte.is_header_3_bytes()) return readCodePointByte4(firstByte)
 
         val pos = nextPosition
         if (pos + 1 >= buffer.size) {
@@ -62,7 +92,7 @@ open class Utf8TextReader(buffer: Buffer = Buffer.Empty): RandomAccessTextReader
         return StringsUTF8.codePoint(firstByte, buffer[pos], buffer[pos + 1])
     }
 
-    private fun readCodePoint4Bytes(firstByte: Int): Int {
+    private fun readCodePointByte4(firstByte: Int): Int {
         if (firstByte.is_header_4_bytes()) {
             val pos = nextPosition
             if (pos + 2 < buffer.size) {

@@ -32,6 +32,8 @@ sealed class RandomAccessTextReader: TextReader {
     protected abstract fun readNextCodePoint(): Int
     protected abstract fun readNextAsciiCode(): Int
 
+    abstract fun readCodePoint(position: Int): CodePointAndSize
+
     abstract fun parseFloat(start: Int, end: Int, onFormatError: DecodingErrorHandler<String> = fail): StringToFpConverter
 
     /** @see [readAsciiCode] */
@@ -199,4 +201,3 @@ sealed class RandomAccessTextReader: TextReader {
 
     final override val errorContainer: ErrorContainer<Any> = ErrorContainer()
 }
-
