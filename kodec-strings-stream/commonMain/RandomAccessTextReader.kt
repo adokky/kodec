@@ -90,7 +90,7 @@ sealed class RandomAccessTextReader: TextReader {
             StringsUTF16.getCharsHeavyInline(cp) { hash = StringHashCode.next(hash, it) }
             codePoints++
         }
-        RandomAccessTextReaderSubString(
+        TextReaderSubString(
             reader = this,
             start = start,
             end = position,
@@ -200,4 +200,9 @@ sealed class RandomAccessTextReader: TextReader {
     }
 
     final override val errorContainer: ErrorContainer<Any> = ErrorContainer()
+}
+
+inline fun <T: RandomAccessTextReader, R> T.useThreadLocalSubReader(start: Int = position, read: T.() -> R): R = when(this) {
+    is StringTextReader -> StringTextReader.useThreadLocal(source = this.input, start = start) { read() }
+    is Utf8TextReader -> Utf8TextReader.useThreadLocal(source = this.buffer, start = start) { read() }
 }

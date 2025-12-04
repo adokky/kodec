@@ -1,5 +1,6 @@
 package io.kodec.text
 
+import dev.dokky.pool.use
 import io.kodec.*
 import io.kodec.StringsUTF8.is_header_2_bytes
 import io.kodec.StringsUTF8.is_header_3_bytes
@@ -115,12 +116,24 @@ open class Utf8TextReader(buffer: Buffer = Buffer.Empty): RandomAccessTextReader
         this.position = position
     }
 
-    companion object {
+    companion object: RandomAccessReaderCompanion<Utf8TextReader, Buffer>() {
         @JvmStatic
-        fun startReadingFrom(input: Buffer, position: Int = 0): Utf8TextReader {
+        override fun startReadingFrom(input: Buffer, position: Int): Utf8TextReader {
             val s = Utf8TextReader(input)
             s.position = position
             return s
+        }
+
+        override fun allocate() = Utf8TextReader()
+
+        internal val Empty: Utf8TextReader = startReadingFrom(Buffer.Empty)
+
+        @JvmStatic
+        inline fun <R> useThreadLocal(source: Buffer, start: Int = 0, body: () -> R): R {
+            return threadLocalPool().use { reader ->
+                reader.startReadingFrom(source, start)
+                body()
+            }
         }
     }
 }

@@ -62,7 +62,7 @@ class SubStringCommonTest {
         Utf8TextReader.startReadingFrom(bytes, position = prefix.length).substring(prefix.length, prefix.length + byteLength)
     }
 
-    private fun String.asBufferSubString(start: Int, end: Int): RandomAccessTextReaderSubString {
+    private fun String.asBufferSubString(start: Int, end: Int): TextReaderSubString {
         val bytes = encodeToByteArray().asDataBuffer()
         var pos = 0
         return Utf8TextReader.startReadingFrom(bytes, position = start)
@@ -112,7 +112,7 @@ class SubStringCommonTest {
         val codepoints = readCharsHeavyInline { charIndex++ != endCharIndex }
         val ssEnd = position
 
-        return RandomAccessTextReaderSubString().also {
+        return TextReaderSubString().also {
             it.set(this, ssStart, ssEnd, codepoints)
         }
     }
@@ -133,6 +133,8 @@ class SubStringCommonTest {
         }
 
         testEquality {
+            group("".substringWrapper(), TextReaderSubString(StringTextReader.Empty, 0, 0, 0), TextReaderSubString(Utf8TextReader.Empty, 0, 0, 0))
+            group(1..1)
             group(1..text.length-1)
             group(2..text.length-1)
             group(0..text.length-4)

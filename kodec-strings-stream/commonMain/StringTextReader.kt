@@ -1,9 +1,7 @@
 package io.kodec.text
 
+import dev.dokky.pool.use
 import io.kodec.*
-import karamel.utils.ThreadLocal
-import dev.dokky.pool.AbstractObjectPool
-import kotlin.jvm.JvmField
 import kotlin.jvm.JvmStatic
 
 open class StringTextReader(input: CharSequence = ""): RandomAccessTextReader() {
@@ -76,24 +74,24 @@ open class StringTextReader(input: CharSequence = ""): RandomAccessTextReader() 
         this.position = position
     }
 
-    companion object {
+    companion object: RandomAccessReaderCompanion<StringTextReader, CharSequence>() {
         @JvmStatic
-        fun startReadingFrom(input: CharSequence, position: Int = 0): StringTextReader {
+        override fun startReadingFrom(input: CharSequence, position: Int): StringTextReader {
             val s = StringTextReader(input)
             s.position = position
             return s
         }
 
-        @JvmField
-        val Empty: StringTextReader = startReadingFrom("")
+        override fun allocate() = StringTextReader()
 
-        private val threadLocal = ThreadLocal {
-            object : AbstractObjectPool<StringTextReader>(1..4) {
-                override fun allocate() = startReadingFrom("")
-                override fun beforeRelease(value: StringTextReader) { value.startReadingFrom("") }
+        internal val Empty: StringTextReader = startReadingFrom("")
+
+        @JvmStatic
+        inline fun <R> useThreadLocal(source: CharSequence, start: Int = 0, body: () -> R): R {
+            return threadLocalPool().use { reader ->
+                reader.startReadingFrom(source, start)
+                body()
             }
         }
-        @JvmStatic
-        fun threadLocalPool(): AbstractObjectPool<StringTextReader> = threadLocal.get()
     }
 }

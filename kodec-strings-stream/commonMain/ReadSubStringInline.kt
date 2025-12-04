@@ -2,13 +2,13 @@ package io.kodec.text
 
 import io.kodec.StringHashCode
 
-inline fun RandomAccessTextReader.readSubStringInline(acceptChar: (Char) -> Boolean): RandomAccessTextReaderSubString {
-    val result = RandomAccessTextReaderSubString()
+inline fun RandomAccessTextReader.readSubStringInline(acceptChar: (Char) -> Boolean): TextReaderSubString {
+    val result = TextReaderSubString()
     readSubStringInline(result, acceptChar)
     return result
 }
 
-inline fun RandomAccessTextReader.readSubStringInline(dest: RandomAccessTextReaderSubString, acceptChar: (Char) -> Boolean) {
+inline fun RandomAccessTextReader.readSubStringInline(dest: TextReaderSubString, acceptChar: (Char) -> Boolean) {
     val start = position
     var hash = StringHashCode.init()
     val codePoints = readCharsHeavyInline { c ->

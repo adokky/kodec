@@ -45,20 +45,13 @@ class SimpleSubString internal constructor(
 
     override fun equals(other: Any?): Boolean {
         if (other !is AbstractSubString) return false
-        if (fastNonEqualityCheck(other)) return false
-
+        if (notEqualHashCode(other)) return false
         return when (other) {
             is SimpleSubString -> fastEquals(other)
-            is RandomAccessTextReaderSubString -> equals(other)
+            is TextReaderSubString -> contentEquals(other, this)
             else -> toString() == other.toString()
         }
     }
-
-    private fun equals(other: RandomAccessTextReaderSubString): Boolean =
-        StringTextReader.threadLocalPool().use { textReader ->
-            textReader.startReadingFrom(source, start)
-            other.equals(textReader, start)
-        }
 
     private fun fastEquals(other: SimpleSubString): Boolean {
         if (other.sourceLength != sourceLength) return false
@@ -82,10 +75,10 @@ class SimpleSubString internal constructor(
 
     override fun toBoolean(): Boolean = source.readBooleanDefault(start, end)
 
-    override fun toLong(): Long = StringTextReader.threadLocalPool().use { textReader ->
-        textReader.startReadingFrom(source, start)
-        val result = textReader.readLong()
-        if (textReader.position < end) throw NumberFormatException()
+    override fun toLong(): Long = StringTextReader.threadLocalPool().use { tempReader ->
+        tempReader.startReadingFrom(source, start)
+        val result = tempReader.readLong()
+        if (tempReader.position < end) throw NumberFormatException()
         result
     }
 

@@ -64,7 +64,7 @@ abstract class AbstractSubString(hashCode: Int = 0): Comparable<AbstractSubStrin
 
     override fun equals(other: Any?): Boolean {
         if (other !is AbstractSubString) return false
-        if (fastNonEqualityCheck(other)) return false
+        if (notEqualHashCode(other)) return false
         if (other::class === this::class && other.sourceLength != sourceLength) return false
         return toString() == other.toString()
     }
@@ -73,17 +73,19 @@ abstract class AbstractSubString(hashCode: Int = 0): Comparable<AbstractSubStrin
         return toString().compareTo(other.toString())
     }
 
-    protected fun fastNonEqualityCheck(other: AbstractSubString): Boolean =
-        cachedHashCode * other.cachedHashCode != 0 &&
-        cachedHashCode != other.cachedHashCode
+    protected fun notEqualHashCode(other: AbstractSubString): Boolean {
+        val c0 = cachedHashCode
+        val c1 = other.cachedHashCode
+        return c0 * c1 != 0 && c0 != c1
+    }
 
     internal fun resetCache(hashCode: Int = 0) {
         cachedHashCode = hashCode
         asString = null
     }
-}
 
-fun AbstractSubString.debugDescription(): String = "$start ..< $end, data: '${toString()}'"
+    fun debugDescription(): String = "$start ..< $end, chash: $cachedHashCode, data: '${toString()}'"
+}
 
 abstract class AbstractMutableSubString(hashCode: Int = 0): AbstractSubString(hashCode) {
     abstract fun clear()
