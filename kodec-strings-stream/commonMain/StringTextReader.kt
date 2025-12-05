@@ -8,7 +8,7 @@ open class StringTextReader(input: CharSequence = ""): RandomAccessTextReader() 
     var input: CharSequence = input
         private set
 
-    override fun resetInput() {
+    override fun close() {
         errorContainer.consumeError()
         input = ""
     }
@@ -62,6 +62,9 @@ open class StringTextReader(input: CharSequence = ""): RandomAccessTextReader() 
             input[position and 0x7f_ff_ff_ff].code
         }
     }
+
+    override fun substring(start: Int): AbstractSubString =
+        substring(start, input.length)
 
     override fun substring(start: Int, end: Int): AbstractSubString =
         SimpleSubString(input, start, end).also { it.validateRange() }

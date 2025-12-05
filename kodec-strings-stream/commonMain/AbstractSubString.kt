@@ -1,13 +1,17 @@
 package io.kodec.text
 
 // TODO store character count
-abstract class AbstractSubString(hashCode: Int = 0): Comparable<AbstractSubString> {
+abstract class AbstractSubString(hashCode: Int = 0): Comparable<AbstractSubString>, AutoCloseable {
+    private var asString: String? = null
+    private var cachedHashCode: Int = hashCode
+
     abstract val start: Int
     abstract val end: Int
 
     val sourceLength: Int get() = end - start
 
     protected abstract fun asString(): String
+
     abstract fun copy(): AbstractSubString
 
     open fun toBoolean(): Boolean = toString().toBoolean()
@@ -46,16 +50,12 @@ abstract class AbstractSubString(hashCode: Int = 0): Comparable<AbstractSubStrin
         return s[start]
     }
 
-    private var asString: String? = null
-
     final override fun toString(): String = asString ?: (asString().also {
         asString = it
         if (cachedHashCode == 0) cachedHashCode = it.hashCode()
     })
 
     protected open fun computeHashCode(): Int = toString().hashCode()
-
-    private var cachedHashCode: Int = hashCode
 
     final override fun hashCode(): Int {
         if (cachedHashCode == 0) cachedHashCode = computeHashCode()
@@ -83,10 +83,4 @@ abstract class AbstractSubString(hashCode: Int = 0): Comparable<AbstractSubStrin
         cachedHashCode = hashCode
         asString = null
     }
-
-    fun debugDescription(): String = "$start ..< $end, chash: $cachedHashCode, data: '${toString()}'"
-}
-
-abstract class AbstractMutableSubString(hashCode: Int = 0): AbstractSubString(hashCode) {
-    abstract fun clear()
 }

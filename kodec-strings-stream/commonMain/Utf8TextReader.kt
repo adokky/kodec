@@ -13,7 +13,7 @@ open class Utf8TextReader(buffer: Buffer = Buffer.Empty): RandomAccessTextReader
     var buffer: Buffer = buffer
         private set
 
-    override fun resetInput() {
+    override fun close() {
         buffer = Buffer.Empty
     }
 

@@ -11,7 +11,7 @@ class TextReaderSubString(
     end: Int,
     codePoints: Int,
     hashCode: Int = 0
-) : AbstractMutableSubString(hashCode) {
+) : AbstractSubString(hashCode) {
     constructor(): this(StringTextReader.Empty, 0, 0, 0, 0)
 
     var reader: RandomAccessTextReader = reader
@@ -56,7 +56,7 @@ class TextReaderSubString(
         this.codePoints = codePoints
     }
 
-    override fun clear() {
+    override fun close() {
         setUnchecked(StringTextReader.Empty, 0, 0, 0)
     }
 
@@ -87,9 +87,9 @@ class TextReaderSubString(
     }
 
     private fun validate() {
-        require(start >= 0)
+        require(start >= 0) { "invalid start=$start" }
         require(start <= end) { "start > end, $start=start, $end=end" }
-        require(codePoints in 0..sourceLength) { "codePoints=$codePoints, " + debugDescription() }
+        require(codePoints in 0..sourceLength) { "invalid codePoints=$codePoints" }
     }
 
     override fun equals(other: Any?): Boolean {

@@ -12,7 +12,7 @@ class SimpleSubString internal constructor(
     start: Int,
     end: Int,
     hashCode: Int = 0
-): AbstractMutableSubString(hashCode) {
+): AbstractSubString(hashCode) {
     var source: CharSequence = source
         private set
     override var start: Int = start
@@ -20,7 +20,7 @@ class SimpleSubString internal constructor(
     override var end: Int = end
         private set
 
-    override fun clear() {
+    override fun close() {
         set("", 0, 0)
     }
 

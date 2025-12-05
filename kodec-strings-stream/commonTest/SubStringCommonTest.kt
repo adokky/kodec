@@ -105,7 +105,7 @@ class SubStringCommonTest {
 
     fun RandomAccessTextReader.charSubString(startCharIndex: Int, endCharIndex: Int): AbstractSubString {
         var charIndex = 0
-        readStringWhile { charIndex++ != startCharIndex }
+        readCharsWhile { charIndex++ != startCharIndex }
         val ssStart = position
         charIndex--
 

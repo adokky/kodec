@@ -27,8 +27,6 @@ fun TextReader.readStringUntil(
 }
 
 /** Reads a string until [acceptChar] returns false or end of the stream is reached */
-fun TextReader.readStringWhile(acceptChar: (Char) -> Boolean) {
+fun TextReader.readCharsWhile(acceptChar: (Char) -> Boolean) {
     readCharsHeavyInline(acceptChar)
 }
-
-fun TextReader.nextCodePointAsString(): String = if (nextCodePoint >= 0) nextCodePoint.toChar().toString() else "EOF"

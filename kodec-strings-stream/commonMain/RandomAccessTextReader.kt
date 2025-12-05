@@ -8,7 +8,7 @@ import karamel.utils.Bits32
  * WARN: Derived classes should override default initialization
  * logic via init/factory to initialize [position] before usage.
  */
-sealed class RandomAccessTextReader: TextReader {
+sealed class RandomAccessTextReader: TextReader, AutoCloseable {
     final override val nextCodePoint: Int get() = _nextCodePoint
     private var _nextCodePoint = -1
 
@@ -53,8 +53,22 @@ sealed class RandomAccessTextReader: TextReader {
     open fun readShort(position: Int): Short     = readAtPosition(position, RandomAccessTextReader::readShort)
     open fun readInt(position: Int): Int         = readAtPosition(position, RandomAccessTextReader::readInt)
     open fun readLong(position: Int): Long       = readAtPosition(position, RandomAccessTextReader::readLong)
-    open fun readFloat(position: Int): Float     = readAtPosition(position, RandomAccessTextReader::readFloat)
-    open fun readDouble(position: Int): Double   = readAtPosition(position, RandomAccessTextReader::readDouble)
+
+    open fun readFloat(
+        position: Int,
+        allowSpecialValues: Boolean = false,
+        onFormatError: DecodingErrorHandler<String> = fail
+    ): Float = readAtPosition(position) {
+        readFloat(allowSpecialValues, onFormatError)
+    }
+
+    open fun readDouble(
+        position: Int,
+        allowSpecialValues: Boolean = false,
+        onFormatError: DecodingErrorHandler<String> = fail
+    ): Double = readAtPosition(position) {
+        readDouble(allowSpecialValues, onFormatError)
+    }
 
     open fun readStringSized(start: Int, length: Int): String = readAtPosition(start) {
         readStringSized(length)
@@ -78,25 +92,33 @@ sealed class RandomAccessTextReader: TextReader {
         return stringBuilder.substring(sbStart)
     }
 
-    open fun substring(start: Int, end: Int = Int.MAX_VALUE): AbstractSubString = readAtPosition(start) {
-        var codePoints = 0
-        var hash = StringHashCode.init()
-        while (position < end) {
-            val cp = readCodePoint()
-            if (cp < 0) {
-                if (end == Int.MAX_VALUE) break
-                throw IndexOutOfBoundsException()
+    open fun substring(start: Int): AbstractSubString = substringDefault(start)
+
+    open fun substring(start: Int, end: Int): AbstractSubString = substringDefault(start, end)
+
+    private fun substringDefault(start: Int, end: Int = Int.MAX_VALUE): AbstractSubString {
+        require(start <= end) { "invalid range $start..$end" }
+
+        return readAtPosition(start) {
+            var codePoints = 0
+            var hash = StringHashCode.init()
+            while (position < end) {
+                val cp = readCodePoint()
+                if (cp < 0) {
+                    if (end == Int.MAX_VALUE) break
+                    throw IllegalArgumentException("invalid 'end': $end. Source length: $position")
+                }
+                StringsUTF16.getCharsHeavyInline(cp) { hash = StringHashCode.next(hash, it) }
+                codePoints++
             }
-            StringsUTF16.getCharsHeavyInline(cp) { hash = StringHashCode.next(hash, it) }
-            codePoints++
+            TextReaderSubString(
+                reader = this,
+                start = start,
+                end = position,
+                codePoints = codePoints,
+                hashCode = hash
+            )
         }
-        TextReaderSubString(
-            reader = this,
-            start = start,
-            end = position,
-            codePoints = codePoints,
-            hashCode = hash
-        )
     }
 
     final override fun readCodePoint(): Int {
@@ -154,6 +176,8 @@ sealed class RandomAccessTextReader: TextReader {
     )
 
     private fun tryReadSpecialFpValue(): StringToFpConverter? {
+        println(nextCodePoint.toChar())
+
         val negative = trySkip('-')
 
         return when(nextCodePoint or StringsASCII.LOWER_CASE_BIT) {
@@ -188,8 +212,6 @@ sealed class RandomAccessTextReader: TextReader {
 
     override fun readDouble(allowSpecialValues: Boolean, onFormatError: DecodingErrorHandler<String>): Double =
         parseFloat(allowSpecialValues = allowSpecialValues, onFormatError = onFormatError).doubleValue()
-
-    abstract fun resetInput()
 
     final override val fail: DecodingErrorHandler<Any> = DecodingErrorHandler { err ->
         fail(

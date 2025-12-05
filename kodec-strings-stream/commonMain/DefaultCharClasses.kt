@@ -14,63 +14,63 @@ object DefaultCharClasses: AutoBitDescriptors() {
     val EOF: Bits32<DefaultCharClasses>           = uniqueBit() + JSON_STR_TERM
 
     val mapper: CharToClassMapper<DefaultCharClasses> = CharToClassMapper<DefaultCharClasses>().apply {
-        putBits(-1, EOF)
+        assignClasses(-1, EOF)
 
         // ASCII control characters
         for (i in 0 ..< 0x20) {
-            putBits(i, JSON_STR_TERM + INVALID)
+            assignClasses(i, JSON_STR_TERM + INVALID)
         }
 
         // whitespace
-        putBits(0x09, WHITESPACE) // HT
-        putBits(0x0a, WHITESPACE) // LF
-        putBits(0x0d, WHITESPACE) // CR
-        putBits(0x20, WHITESPACE) // space
+        assignClasses(0x09, WHITESPACE) // HT
+        assignClasses(0x0a, WHITESPACE) // LF
+        assignClasses(0x0d, WHITESPACE) // CR
+        assignClasses(0x20, WHITESPACE) // space
 
         // digits
         for (c in 0x30..0x39) {
-            putBits(c, DIGIT)
+            assignClasses(c, DIGIT)
         }
 
-        putBits('e', FLOAT)
-        putBits('E', FLOAT)
+        assignClasses('e', FLOAT)
+        assignClasses('E', FLOAT)
 
-        putBits('N', FLOAT)
-        putBits('a', FLOAT)
+        assignClasses('N', FLOAT)
+        assignClasses('a', FLOAT)
 
-        putBits('*', WORD_TERM)
-        putBits('!', WORD_TERM)
-        putBits('#', WORD_TERM)
-        putBits('$', WORD_TERM)
-        putBits('%', WORD_TERM)
-        putBits('&', WORD_TERM)
-        putBits('\'', WORD_TERM)
-        putBits('(', WORD_TERM)
-        putBits(')', WORD_TERM)
-        putBits('`', WORD_TERM)
-        putBits('/', WORD_TERM)
-        putBits(';', WORD_TERM)
-        putBits('<', WORD_TERM)
-        putBits('>', WORD_TERM)
-        putBits('=', WORD_TERM)
-        putBits('?', WORD_TERM)
-        putBits('@', WORD_TERM)
+        assignClasses('*', WORD_TERM)
+        assignClasses('!', WORD_TERM)
+        assignClasses('#', WORD_TERM)
+        assignClasses('$', WORD_TERM)
+        assignClasses('%', WORD_TERM)
+        assignClasses('&', WORD_TERM)
+        assignClasses('\'', WORD_TERM)
+        assignClasses('(', WORD_TERM)
+        assignClasses(')', WORD_TERM)
+        assignClasses('`', WORD_TERM)
+        assignClasses('/', WORD_TERM)
+        assignClasses(';', WORD_TERM)
+        assignClasses('<', WORD_TERM)
+        assignClasses('>', WORD_TERM)
+        assignClasses('=', WORD_TERM)
+        assignClasses('?', WORD_TERM)
+        assignClasses('@', WORD_TERM)
 
-        putBits(',', JSON_STR_TERM + JSON_TOKEN)
-        putBits('.', FLOAT)
-        putBits('-', FLOAT)
-        putBits('+', FLOAT)
-        putBits(':', JSON_STR_TERM + JSON_TOKEN)
-        putBits('{', JSON_STR_TERM + JSON_TOKEN)
-        putBits('}', JSON_STR_TERM + JSON_TOKEN)
-        putBits('[', JSON_STR_TERM + JSON_TOKEN)
-        putBits(']', JSON_STR_TERM + JSON_TOKEN)
-        putBits('"', JSON_STR_TERM + JSON_TOKEN)
-        putBits('\\', JSON_TOKEN + WORD_TERM)
+        assignClasses(',', JSON_STR_TERM + JSON_TOKEN)
+        assignClasses('.', FLOAT)
+        assignClasses('-', FLOAT)
+        assignClasses('+', FLOAT)
+        assignClasses(':', JSON_STR_TERM + JSON_TOKEN)
+        assignClasses('{', JSON_STR_TERM + JSON_TOKEN)
+        assignClasses('}', JSON_STR_TERM + JSON_TOKEN)
+        assignClasses('[', JSON_STR_TERM + JSON_TOKEN)
+        assignClasses(']', JSON_STR_TERM + JSON_TOKEN)
+        assignClasses('"', JSON_STR_TERM + JSON_TOKEN)
+        assignClasses('\\', JSON_TOKEN + WORD_TERM)
     }
 
     fun hasValidClass(code: Int, classes: Bits32<DefaultCharClasses>): Boolean =
-        mapper.getBits(code).containsAllExcept(classes, none = INVALID)
+        mapper.getClasses(code).containsAllExcept(classes, none = INVALID)
 
     fun isFloatLiteral(code: Int): Boolean = hasValidClass(code, FLOAT)
 

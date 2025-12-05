@@ -8,12 +8,10 @@ sealed class RandomAccessReaderCompanion<Reader: RandomAccessTextReader, Source:
 
     protected abstract fun allocate(): Reader
 
-    protected val threadLocal = ThreadLocal {
+    protected val threadLocal: ThreadLocal<out AbstractObjectPool<Reader>> = ThreadLocal {
         object : AbstractObjectPool<Reader>(1..4) {
             override fun allocate() = this@RandomAccessReaderCompanion.allocate()
-            override fun beforeRelease(value: Reader) {
-                value.resetInput()
-            }
+            override fun beforeRelease(value: Reader) { value.close() }
         }
     }
 
