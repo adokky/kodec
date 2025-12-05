@@ -176,8 +176,6 @@ sealed class RandomAccessTextReader: TextReader, AutoCloseable {
     )
 
     private fun tryReadSpecialFpValue(): StringToFpConverter? {
-        println(nextCodePoint.toChar())
-
         val negative = trySkip('-')
 
         return when(nextCodePoint or StringsASCII.LOWER_CASE_BIT) {
