@@ -10,6 +10,7 @@ rootProject.name = "kodec"
 include(":kodec-binary-num")
 include(":kodec-buffers-core")
 include(":kodec-buffers-data")
+include(":kodec-java-io")
 include(":kodec-strings-common")
 include(":kodec-strings-number")
 include(":kodec-strings-stream")

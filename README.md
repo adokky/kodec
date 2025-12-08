@@ -34,6 +34,13 @@ The module is compact and intended to be used as a basic memory IO integration l
 
 `kodec-buffers-core` extensions for encoding/decoding strings and numbers.
 
+### `kodec-java-io`
+
+[![Maven Central Version](https://img.shields.io/maven-central/v/io.github.adokky/kodec-java-io)](https://mvnrepository.com/artifact/io.github.adokky/kodec-java-io)
+[![javadoc](https://javadoc.io/badge2/io.github.adokky/kodec-java-io/javadoc.svg)](https://javadoc.io/doc/io.github.adokky/kodec-java-io)
+
+Bridge between `kodec-buffers-core` and standard Java IO abstractions: `OutputStream`, `InputStream`, `ByteBuffer`. 
+
 ### `kodec-strings-stream`
 
 [![Maven Central Version](https://img.shields.io/maven-central/v/io.github.adokky/kodec-strings-stream)](https://mvnrepository.com/artifact/io.github.adokky/kodec-strings-stream)
