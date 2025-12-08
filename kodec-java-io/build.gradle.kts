@@ -3,6 +3,15 @@ plugins {
     alias(libs.plugins.quick.publish)
 }
 
+version = "0.1.0"
+
 dependencies {
-    implementation(project(":kodec-buffers-core"))
+    api(project(":kodec-buffers-core"))
+}
+
+mavenPublishing {
+    pom {
+        description = "Bridge between `kodec-buffers-core` and standard Java IO abstractions"
+        inceptionYear = "2025"
+    }
 }
