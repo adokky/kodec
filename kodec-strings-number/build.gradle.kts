@@ -1,6 +1,6 @@
 plugins {
-    id("io.github.adokky.quick-mpp")
-    id("io.github.adokky.quick-publish")
+    alias(libs.plugins.quick.mpp)
+    alias(libs.plugins.quick.publish)
 }
 
 version = "0.9.2"

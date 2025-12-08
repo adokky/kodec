@@ -1,5 +1,5 @@
 plugins {
-    id("io.github.adokky.quick-mpp")
+    alias(libs.plugins.quick.mpp)
 }
 
 dependencies {
