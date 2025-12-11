@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.quick.publish)
 }
 
-version = "0.9.1"
+version = "0.10.0"
 
 dependencies {
     commonMainApi(project(":kodec-buffers-core"))
