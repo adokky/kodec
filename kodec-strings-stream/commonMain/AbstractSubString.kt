@@ -1,18 +1,32 @@
 package io.kodec.text
 
-// TODO store character count
-abstract class AbstractSubString(hashCode: Int = 0): Comparable<AbstractSubString>, AutoCloseable {
-    private var asString: String? = null
-    private var cachedHashCode: Int = hashCode
+sealed class AbstractSubString(hashCode: Int = 0): Comparable<AbstractSubString>, AutoCloseable {
+    @PublishedApi internal var cachedString: String? = null
+        private set
+    @PublishedApi internal var cachedHashCode: Int = if (hashCode == 0) 0 else hashCode + 1
+        private set
 
     abstract val start: Int
     abstract val end: Int
 
     val sourceLength: Int get() = end - start
 
-    protected abstract fun asString(): String
-
     abstract fun copy(): AbstractSubString
+
+    protected abstract fun iterateChars(body: (Char) -> Unit)
+
+    protected open fun asString(): String = buildString(sourceLength) {
+        this@AbstractSubString.forEach { append(it) }
+    }
+
+    fun forEach(body: (Char) -> Unit) {
+        val cached = cachedString
+        if (cached != null) {
+            cached.forEach(body)
+        } else {
+            iterateChars(body)
+        }
+    }
 
     open fun toBoolean(): Boolean = toString().toBoolean()
 
@@ -50,13 +64,14 @@ abstract class AbstractSubString(hashCode: Int = 0): Comparable<AbstractSubStrin
         return s[start]
     }
 
-    final override fun toString(): String = asString ?: (asString().also {
-        asString = it
-        if (cachedHashCode == 0) cachedHashCode = it.hashCode()
+    final override fun toString(): String = cachedString ?: (asString().also {
+        cachedString = it
+        if (cachedHashCode == 0) cachedHashCode = it.hashCode() + 1
     })
 
-    protected open fun computeHashCode(): Int = toString().hashCode()
+    protected abstract fun computeHashCode(): Int // = toString().hashCode() + 1
 
+    /** The hash code is always `toString().hashCode() + 1` */
     final override fun hashCode(): Int {
         if (cachedHashCode == 0) cachedHashCode = computeHashCode()
         return cachedHashCode
@@ -80,7 +95,7 @@ abstract class AbstractSubString(hashCode: Int = 0): Comparable<AbstractSubStrin
     }
 
     internal fun resetCache(hashCode: Int = 0) {
-        cachedHashCode = hashCode
-        asString = null
+        cachedHashCode = if (hashCode == 0) 0 else (hashCode + 1)
+        cachedString = null
     }
 }

@@ -4,12 +4,7 @@ import io.kodec.NumbersDataSet
 import karamel.utils.Bits32
 import karamel.utils.enrichMessageOf
 import kotlin.math.sign
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
-import kotlin.test.fail
+import kotlin.test.*
 
 class ReadNumberTest {
     private val reader = StringTextReader.Empty

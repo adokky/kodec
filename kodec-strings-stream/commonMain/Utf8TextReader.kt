@@ -7,6 +7,7 @@ import io.kodec.StringsUTF8.is_header_3_bytes
 import io.kodec.StringsUTF8.is_header_4_bytes
 import io.kodec.buffers.Buffer
 import io.kodec.buffers.asArrayBuffer
+import karamel.utils.unsafeCast
 import kotlin.jvm.JvmStatic
 
 open class Utf8TextReader(buffer: Buffer = Buffer.Empty): RandomAccessTextReader() {
@@ -124,7 +125,7 @@ open class Utf8TextReader(buffer: Buffer = Buffer.Empty): RandomAccessTextReader
             return s
         }
 
-        override fun allocate() = Utf8TextReader()
+        override fun allocate(): Utf8TextReader = Utf8TextReader()
 
         internal val Empty: Utf8TextReader = startReadingFrom(Buffer.Empty)
 
@@ -138,9 +139,8 @@ open class Utf8TextReader(buffer: Buffer = Buffer.Empty): RandomAccessTextReader
     }
 }
 
-fun Buffer.asUtf8Substring(): AbstractSubString {
-    return Utf8TextReader.startReadingFrom(this).substring(0)
-}
+fun Buffer.asUtf8Substring(): TextReaderSubString =
+    Utf8TextReader.startReadingFrom(this).substring(0).unsafeCast()
 
-fun String.asUtf8SubString(): AbstractSubString =
+fun String.asUtf8SubString(): TextReaderSubString =
     encodeToByteArray().asArrayBuffer().asUtf8Substring()

@@ -5,8 +5,15 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
-class SimpleSubStringTest {
+class SimpleSubStringTest: AbstractSubStringTest<SimpleSubString>() {
     private val ss = SimpleSubString()
+
+    override fun substring(source: String, start: Int, end: Int) =
+        SimpleSubString(source, start, end)
+
+    override fun SimpleSubString.resetData(source: String, start: Int, end: Int) {
+        set(source, start, end)
+    }
 
     @Test
     fun simple() {
@@ -53,13 +60,5 @@ class SimpleSubStringTest {
         assertFailsWith<IllegalArgumentException> {
             ss.set("012", start = 2, end = 1)
         }
-    }
-
-    @Test
-    fun numbers() {
-        assertEquals(-123, "-123".substringWrapper().toInt())
-        assertEquals(-123456789012L, "-123456789012".substringWrapper().toLong())
-        assertEquals(0.12f, "0.12".substringWrapper().toFloat(), absoluteTolerance = 0.001f)
-        assertEquals(0.12, "0.12".substringWrapper().toDouble(), absoluteTolerance = 0.00001)
     }
 }

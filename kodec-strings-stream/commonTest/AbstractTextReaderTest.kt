@@ -372,6 +372,7 @@ abstract class AbstractTextReaderTest {
     fun sub_string() {
         setText("Привет, Мир!")
         val ss = reader.readSubStringInline { it != ',' }
+        assertEquals("Привет".hashCode() + 1, ss.hashCode())
         assertEquals("Привет", ss.toString())
         reader.expect(',')
         reader.skipWhitespaceStrict()

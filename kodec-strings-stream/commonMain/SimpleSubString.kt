@@ -6,6 +6,12 @@ import io.kodec.toDouble
 import io.kodec.toFloat
 import kotlin.jvm.JvmStatic
 
+/**
+ * @param start the starting position of the substring (inclusive)
+ * @param end the ending position of the substring (exclusive)
+ * @param hashCode [String.hashCode] of the equivalent substring, or 0 to compute it lazily.
+ * The actual hash code of this [SimpleSubString] is always [String.hashCode] + 1.
+ */
 @Suppress("EqualsOrHashCode")
 class SimpleSubString internal constructor(
     source: CharSequence,
@@ -24,11 +30,19 @@ class SimpleSubString internal constructor(
         set("", 0, 0)
     }
 
+    /**
+     * @param hashCode [String.hashCode] of the equivalent substring, or 0 to compute it lazily.
+     */
     fun set(source: CharSequence, start: Int = 0, end: Int = source.length, hashCode: Int = 0) {
         setUnchecked(source = source, start = start, end = end, hashCode = hashCode)
         validateRange()
     }
 
+    /**
+     * Same as [set] but without range checks.
+     *
+     * @param hashCode [String.hashCode] of the equivalent substring, or 0 to compute it lazily.
+     */
     fun setUnchecked(source: CharSequence, start: Int = 0, end: Int = source.length, hashCode: Int = 0) {
         resetCache(hashCode)
 
@@ -48,8 +62,7 @@ class SimpleSubString internal constructor(
         if (notEqualHashCode(other)) return false
         return when (other) {
             is SimpleSubString -> fastEquals(other)
-            is TextReaderSubString -> contentEquals(other, this)
-            else -> toString() == other.toString()
+            is TextReaderSubString -> other.contentStringEquals(this)
         }
     }
 
@@ -70,7 +83,7 @@ class SimpleSubString internal constructor(
         for (i in start ..< end) {
             hash = StringHashCode.next(hash, source[i])
         }
-        return hash
+        return hash + 1
     }
 
     override fun toBoolean(): Boolean = source.readBooleanDefault(start, end)
@@ -91,9 +104,18 @@ class SimpleSubString internal constructor(
         return source[start]
     }
 
-    override fun asString(): String = source.substring(start, end)
+    override fun asString(): String = when (val s = source) {
+        is String -> s.substring(start, end)
+        else -> s.substring(start, end)
+    }
 
     override fun copy(): SimpleSubString = SimpleSubString(source, start, end)
+
+    override fun iterateChars(body: (Char) -> Unit) {
+        for (i in start..<end) {
+            body(source[i])
+        }
+    }
 
     companion object {
         @JvmStatic

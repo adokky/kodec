@@ -96,7 +96,7 @@ sealed class RandomAccessTextReader: TextReader, AutoCloseable {
 
     open fun substring(start: Int, end: Int): AbstractSubString = substringDefault(start, end)
 
-    private fun substringDefault(start: Int, end: Int = Int.MAX_VALUE): AbstractSubString {
+    internal fun substringDefault(start: Int, end: Int = Int.MAX_VALUE): TextReaderSubString {
         require(start <= end) { "invalid range $start..$end" }
 
         return readAtPosition(start) {

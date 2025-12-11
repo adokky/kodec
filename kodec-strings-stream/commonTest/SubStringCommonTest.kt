@@ -86,13 +86,15 @@ class SubStringCommonTest {
     @Test
     fun hash_code() {
         fun check(ss: AbstractSubString) {
-            assertNotEquals(0, ss1.hashCode())
-            val expectedHashCode = ss.toString().hashCode()
+            assertNotEquals(0, ss.hashCode())
+
+            val expectedHashCode = ss.toString().hashCode() + 1
             assertEquals(expectedHashCode, ss.hashCode())
 
-            ss1.resetCache()
-            assertNotEquals(0, ss1.hashCode())
-            ss1.resetCache()
+            ss.resetCache()
+            assertNotEquals(0, ss.hashCode())
+
+            ss.resetCache()
             assertEquals(expectedHashCode, ss.hashCode())
         }
 
@@ -101,6 +103,54 @@ class SubStringCommonTest {
         check(ss3)
         check(modifiedSs1)
         check(modifiedSs2)
+    }
+
+    @Test
+    fun text_reader_substring_hash_code_set() {
+        val ss = TextReaderSubString()
+
+        assertEquals(0, ss.cachedHashCode)
+
+        ss.resetCache()
+        assertEquals(0, ss.cachedHashCode)
+
+        ss.resetCache(111)
+        assertEquals(112, ss.cachedHashCode)
+
+        ss.set(StringTextReader.Empty, 0, 0, 0, hashCode = -123)
+        assertEquals(-122, ss.cachedHashCode)
+
+        ss.setUnchecked(StringTextReader.Empty, 0, 0, 0, hashCode = 456)
+        assertEquals(457, ss.cachedHashCode)
+
+        val encoded = "abc".encodeToByteArray().asDataBuffer()
+        ss.set(Utf8TextReader.startReadingFrom(encoded), 0, encoded.endExclusive, codePoints = 3)
+        assertEquals("abc".hashCode() + 1, ss.hashCode())
+
+        ss.set(StringTextReader.startReadingFrom("xyz"), 0, encoded.endExclusive, codePoints = 3)
+        assertEquals("xyz".hashCode() + 1, ss.hashCode())
+    }
+
+    @Test
+    fun simple_substring_hash_code_set() {
+        val ss = SimpleSubString()
+
+        assertEquals(0, ss.cachedHashCode)
+
+        ss.resetCache()
+        assertEquals(0, ss.cachedHashCode)
+
+        ss.resetCache(111)
+        assertEquals(112, ss.cachedHashCode)
+
+        ss.set("", 0, 0, hashCode = -123)
+        assertEquals(-122, ss.cachedHashCode)
+
+        ss.setUnchecked("", 0, 0, hashCode = 456)
+        assertEquals(457, ss.cachedHashCode)
+
+        ss.set("abc")
+        assertEquals("abc".hashCode() + 1, ss.hashCode())
     }
 
     fun RandomAccessTextReader.charSubString(startCharIndex: Int, endCharIndex: Int): AbstractSubString {
