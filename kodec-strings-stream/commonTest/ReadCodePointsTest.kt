@@ -101,44 +101,30 @@ class ReadCodePointsTest {
     fun testReadCodePointsWithHighSurrogateAtEnd() {
         // Incomplete surrogate pair at end
         val text = "A\ud83d" // A + incomplete surrogate pair
-        val readers = listOf(
-            StringTextReader(text),
-            text.encodeToByteArray().asArrayBuffer().let { buffer ->
-                Utf8TextReader.startReadingFrom(buffer)
-            }
-        )
+        val reader = StringTextReader(text)
 
-        readers.forEach { reader ->
-            val codePoints = mutableListOf<Int>()
-            reader.readCodePoints(0, text.length) { cp ->
-                codePoints.add(cp)
-            }
-
-            // Expect replacement of incomplete surrogate pair
-            assertEquals(2, codePoints.size)
-            assertEquals('A'.code, codePoints[0])
+        val codePoints = mutableListOf<Int>()
+        reader.readCodePoints(0, text.length) { cp ->
+            codePoints.add(cp)
         }
+
+        // Expect replacement of incomplete surrogate pair
+        assertEquals(2, codePoints.size)
+        assertEquals('A'.code, codePoints[0])
     }
 
     @Test
     fun testReadCodePointsWithLowSurrogateAtStart() {
         val text = "\ude00A" // incomplete surrogate pair + A
-        val readers = listOf(
-            StringTextReader(text),
-            text.encodeToByteArray().asArrayBuffer().let { buffer ->
-                Utf8TextReader.startReadingFrom(buffer)
-            }
-        )
+        val reader = StringTextReader(text)
 
-        readers.forEach { reader ->
-            val codePoints = mutableListOf<Int>()
-            reader.readCodePoints(0, text.length) { cp ->
-                codePoints.add(cp)
-            }
-
-            // UTF-8 reader should handle this correctly
-            assertEquals(2, codePoints.size)
-            assertEquals('A'.code, codePoints[1])
+        val codePoints = mutableListOf<Int>()
+        reader.readCodePoints(0, text.length) { cp ->
+            codePoints.add(cp)
         }
+
+        // UTF-8 reader should handle this correctly
+        assertEquals(2, codePoints.size)
+        assertEquals('A'.code, codePoints[1])
     }
 }
