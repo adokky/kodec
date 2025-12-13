@@ -19,12 +19,11 @@ value class CharToClassMapper<T: BitDescriptors> private constructor(private val
     fun assignClasses(char: Char, bits: Bits32<T>): Unit = assignClasses(char.code, bits)
     
     @JvmOverloads
-    fun getClasses(charCode: Int, default: Bits32<T> = Bits32(0)): Bits32<T> {
-        val idx = charCode + 1
-        var bits = default
-        if (idx in charToBits.indices) bits = Bits32(charToBits[idx].asInt())
-        return bits
-    }
+    fun getClasses(charCode: Int, default: Bits32<T> = Bits32(0)): Bits32<T> =
+        when (val idx = charCode + 1) {
+            in charToBits.indices -> Bits32(charToBits[idx].asInt())
+            else -> default
+        }
 
     fun hasClass(charCode: Int, c0: Bits32<T>): Boolean = c0 in getClasses(charCode)
 

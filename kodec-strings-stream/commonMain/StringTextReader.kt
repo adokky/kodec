@@ -17,19 +17,21 @@ open class StringTextReader(input: CharSequence = ""): RandomAccessTextReader() 
         var pos = nextPosition
         if (pos >= input.length) return -1
 
-        val c1 = input[pos++]
-        var code = c1.code
+        val c = input[pos++]
 
-        if (c1.isHighSurrogate()) {
-            if (pos >= input.length) {
-                nextPosition = pos
-                return StringsASCII.INVALID_BYTE_PLACEHOLDER.code
-            }
-            code = StringsUTF16.codePoint(code, input[pos and 0x7f_ff_ff_ff].code)
-            pos++
-        }
+        if (c.isHighSurrogate()) return readSurrogatePair(high = c, lowPos = pos)
 
         nextPosition = pos
+        return c.code
+    }
+
+    private fun readSurrogatePair(high: Char, lowPos: Int): Int {
+        if (lowPos >= input.length) {
+            nextPosition = input.length
+            return StringsASCII.INVALID_BYTE_PLACEHOLDER.code
+        }
+        val code = StringsUTF16.codePoint(high.code, input[lowPos and 0x7f_ff_ff_ff].code)
+        nextPosition = lowPos + 1
         return code
     }
 
