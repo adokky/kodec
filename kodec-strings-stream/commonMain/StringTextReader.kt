@@ -19,7 +19,10 @@ open class StringTextReader(input: CharSequence = ""): RandomAccessTextReader() 
 
         val c = input[pos++]
 
-        if (c.isHighSurrogate()) return readSurrogatePair(high = c, lowPos = pos)
+        // 1101 1000 0000 0000: min HS 0xD800
+        // 1101 1011 1111 1111: max HS 0xDBFF
+        // 1111 1000 0000 0000: mask 0xF800
+        if ((c.code and 0xF800) == 0xD800) return readSurrogatePair(high = c, lowPos = pos)
 
         nextPosition = pos
         return c.code
