@@ -5,7 +5,7 @@ import io.kodec.PreparedStringToFpBuffer.Companion.NEGATIVE_ZERO
 import io.kodec.PreparedStringToFpBuffer.Companion.NOT_A_NUMBER
 import io.kodec.PreparedStringToFpBuffer.Companion.POSITIVE_INFINITY
 import io.kodec.PreparedStringToFpBuffer.Companion.POSITIVE_ZERO
-import io.kodec.buffers.*
+import io.kodec.buffers.Buffer
 import karamel.utils.ThreadLocal
 import karamel.utils.suppress
 import kotlin.jvm.JvmStatic
@@ -79,11 +79,7 @@ object FloatingDecimalParsing {
         var isNegative = false
         var signSeen = false
 
-        if (endExclusive - start == 0) {
-            onFormatError("malformed number")
-            return NOT_A_NUMBER
-        }
-
+        if (endExclusive - start > 0)
         suppress<IndexOutOfBoundsException> parseNumber@ {
             var i = start
 
