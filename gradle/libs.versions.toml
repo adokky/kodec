@@ -1,6 +1,6 @@
 [versions]
-kotlin = "2.3.0-RC3"
-quickMpp = "0.21"
+kotlin = "2.3.0"
+quickMpp = "0.22"
 
 [libraries]
 objectPool = { module = "io.github.adokky:object-pool", version = "1.0" }
