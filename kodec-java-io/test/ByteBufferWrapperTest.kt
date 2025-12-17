@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.nio.ByteBuffer
+import kotlin.test.assertFailsWith
 
 class ByteBufferWrapperTest {
     private fun createTestBuffer(): ByteBuffer {
@@ -16,6 +17,52 @@ class ByteBufferWrapperTest {
 
     private fun createTestBytes(): ByteArray {
         return (0..2).map { (it % 256).toByte() }.toByteArray()
+    }
+
+    @Test
+    fun test_invalid_range_validation() {
+        val buffer = ByteBuffer.allocate(5)
+
+        assertFailsWith<IllegalArgumentException> {
+            ByteBufferWrapper(buffer, 2, 10) // endExclusive > buffer.limit()
+        }
+        assertFailsWith<IllegalArgumentException> {
+            ByteBufferWrapper(buffer, -1, 3) // start < 0
+        }
+        assertFailsWith<IllegalArgumentException> {
+            ByteBufferWrapper(buffer, 3, 2) // start >= endExclusive
+        }
+    }
+
+    @Test
+    fun test_reset() {
+        val buffer1 = ByteBuffer.allocate(10)
+        val buffer2 = ByteBuffer.allocate(5)
+
+        val wrapper = ByteBufferWrapper(buffer1, 2, 8)
+
+        // Fill the original buffer
+        wrapper[0] = 0x42
+        wrapper[1] = 0xFF
+
+        // Reset to a different buffer with a different range
+        wrapper.reset(buffer2, 1, 4)
+
+        // Check that we're now using the new buffer
+        wrapper[0] = 0xAA
+        wrapper[1] = 0xBB
+
+        // Verify values were written to the correct positions
+        assertEquals(0xAA, wrapper[0])
+        assertEquals(0xBB, wrapper[1])
+
+        // Verify the original buffer was not affected (at the correct offset)
+        assertEquals(0x42.toByte(), buffer1.get(2)) // offset 2 in buffer1
+        assertEquals(0xFF.toByte(), buffer1.get(3)) // offset 3 in buffer1
+
+        // Verify the new buffer was modified
+        assertEquals(0xAA.toByte(), buffer2.get(1))
+        assertEquals(0xBB.toByte(), buffer2.get(2))
     }
 
     @Test
