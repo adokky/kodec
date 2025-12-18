@@ -1,8 +1,8 @@
 package io.kodec.text
 
-import io.kodec.StringToFpConverter
 import io.kodec.DecodingErrorHandler
 import io.kodec.DecodingErrorWithMessage
+import io.kodec.StringToFpConverter
 import io.kodec.StringsASCII
 import karamel.utils.BitDescriptors
 import karamel.utils.Bits32
@@ -15,13 +15,13 @@ enum class NumberParsingError(override val message: String): DecodingErrorWithMe
 
 inline fun RandomAccessTextReader.readNumberTemplate(
     acceptInt: (Long) -> Unit,
-    acceptFloat: (StringToFpConverter) -> Unit,
+    acceptDouble: (StringToFpConverter) -> Unit,
     onFail: (error: NumberParsingError) -> Unit = { fail(it.message) },
     allowSpecialFp: Boolean = false
 ) {
     readNumberTemplate(
         acceptInt = acceptInt,
-        acceptFloat = acceptFloat,
+        acceptDouble = acceptDouble,
         charClasses = DefaultCharClasses.mapper,
         terminatorClass = DefaultCharClasses.JSON_STR_TERM,
         onFail = onFail,
@@ -31,7 +31,7 @@ inline fun RandomAccessTextReader.readNumberTemplate(
 
 inline fun <BDS: BitDescriptors> RandomAccessTextReader.readNumberTemplate(
     acceptInt: (Long) -> Unit,
-    acceptFloat: (StringToFpConverter) -> Unit,
+    acceptDouble: (StringToFpConverter) -> Unit,
     charClasses: CharToClassMapper<BDS>,
     terminatorClass: Bits32<BDS>,
     onFail: (error: NumberParsingError) -> Unit = { fail(it.message) },
@@ -71,7 +71,7 @@ inline fun <BDS: BitDescriptors> RandomAccessTextReader.readNumberTemplate(
     if (isFloat) {
         while (!charClasses.hasClass(nextCodePoint, terminatorClass) && nextCodePoint >= 0) readCodePoint()
 
-        val result = parseFloat(start, position, onFormatError = errorContainer.prepare())
+        val result = parseDouble(start, position, onFormatError = errorContainer.prepare())
         errorContainer.consumeError { onFail(NumberParsingError.MalformedNumber); return }
 
         if (!charClasses.hasClass(nextCodePoint, terminatorClass)) {
@@ -79,7 +79,7 @@ inline fun <BDS: BitDescriptors> RandomAccessTextReader.readNumberTemplate(
             return
         }
 
-        if (overflow) onFail(NumberParsingError.FloatOverflow) else acceptFloat(result)
+        if (overflow) onFail(NumberParsingError.FloatOverflow) else acceptDouble(result)
         return
     }
 
@@ -150,7 +150,7 @@ fun <BDS: BitDescriptors> RandomAccessTextReader.readNumber(
 ) {
     readNumberTemplate(
         acceptInt = { result.set(it) },
-        acceptFloat = { result.set(it) },
+        acceptDouble = { result.set(it) },
         charClasses = charClasses,
         terminatorClass = terminatorClass,
         onFail = { onFail(it) },

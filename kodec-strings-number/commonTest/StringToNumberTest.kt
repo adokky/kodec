@@ -1,5 +1,6 @@
 package io.kodec
 
+import io.kodec.buffers.ArrayBuffer
 import io.kodec.buffers.asArrayBuffer
 import kotlin.test.*
 
@@ -10,6 +11,15 @@ open class StringToNumberTest {
         "000001." to 1.0,
         "0000000.001" to 0.001,
     )
+
+    @Test
+    fun max_legth() {
+        assertFailsWith<NumberFormatException> {
+            ("0." + "1".repeat(FloatingDecimalParsing.MAX_DIGITS - 1)).parseDouble()
+        }
+
+        ("0." + "1".repeat(FloatingDecimalParsing.MAX_DIGITS - 2)).parseDouble()
+    }
 
     @Test
     fun floats() {
@@ -49,7 +59,7 @@ open class StringToNumberTest {
             val expected = num.toString()
             for (prefix in randomStrings)
             for (suffix in randomStrings) {
-                val decoded = FloatingDecimalParsing.readBuffer(
+                val decoded = FloatingDecimalParsing.prepareFloat(
                     "$prefix${expected}$suffix".encodeToByteArray().asArrayBuffer(),
                     start = prefix.length,
                     endExclusive = prefix.length + expected.length
@@ -66,7 +76,7 @@ open class StringToNumberTest {
             val expected = num.toString()
             for (prefix in randomStrings)
             for (suffix in randomStrings) {
-                val decoded = FloatingDecimalParsing.readBuffer(
+                val decoded = FloatingDecimalParsing.prepareDouble(
                     "$prefix${expected}$suffix".encodeToByteArray().asArrayBuffer(),
                     start = prefix.length,
                     endExclusive = prefix.length + expected.length
@@ -83,15 +93,17 @@ open class StringToNumberTest {
             try {
                 assertNull(assertFailsWith<NumberFormatException> { FloatingDecimalParsing.parseFloat(input) }.cause)
                 assertNull(assertFailsWith<NumberFormatException> { FloatingDecimalParsing.parseDouble(input) }.cause)
-                assertNull(assertFailsWith<NumberFormatException> { FloatingDecimalParsing.readString(input) }.cause)
-                FloatingDecimalParsing.readString(input, onFormatError = DecodingErrorHandler.Ignore)
+                assertNull(assertFailsWith<NumberFormatException> { FloatingDecimalParsing.prepareFloat(input) }.cause)
+                assertNull(assertFailsWith<NumberFormatException> { FloatingDecimalParsing.prepareDouble(input) }.cause)
+                FloatingDecimalParsing.prepareDouble(input, onFormatError = DecodingErrorHandler.Ignore)
+                FloatingDecimalParsing.prepareFloat(input, onFormatError = DecodingErrorHandler.Ignore)
             } catch (e: Throwable) {
                 fail("failed it '$input'", e)
             }
         }
     }
 
-    private fun assertDoubleEquals(expected: Double, decoded: Double, tolerance: Double = 0.0001) {
+    private fun assertDoubleEquals(expected: Double, decoded: Double, tolerance: Double = 0.000001) {
         if (expected.isNaN() && decoded.isNaN()) return
 
         if (expected.isInfinite() && decoded.isInfinite()) {
@@ -103,6 +115,12 @@ open class StringToNumberTest {
     }
 
     private fun assertFloatEquals(expected: Float, decoded: Float, tolerance: Float = 0.0001f) {
+        if (expected.isNaN() && decoded.isNaN()) return
+
+        if (expected.isInfinite() && decoded.isInfinite()) {
+            assertEquals(expected < 0, decoded < 0)
+        }
+
         if (decoded !in (expected - tolerance .. expected + tolerance))
             fail("expected=$expected\ndecoded=$decoded")
     }
@@ -245,6 +263,8 @@ open class StringToNumberTest {
         "12.e+01",
         "1e-01",
 
+        "1.7976931348623157E308",
+
         "1.7976931348623157E308",  // Double.MAX_VALUE
         "4.9e-324",  // Double.MIN_VALUE
         "2.2250738585072014e-308",  // Double.MIN_NORMAL
@@ -276,9 +296,75 @@ open class StringToNumberTest {
     }
 
     @Test
+    fun bad_double_buffers() {
+        for (s in badStrings) {
+            assertFailsWith<NumberFormatException>(s) {
+                val encoded = s.encodeToByteArray()
+                val buf = ArrayBuffer(encoded.size + 3)
+                buf.putBytes(1, encoded)
+                FloatingDecimalParsing.prepareDouble(buf, start = 1, endExclusive = 1 + encoded.size)
+            }
+        }
+    }
+
+    @Test
     fun good_double_strings() {
         for (s in goodStrings) {
             assertDoubleEquals(s.toDouble(), FloatingDecimalParsing.parseDouble(s))
         }
+    }
+
+    @Test
+    fun good_double_buffers() {
+        for (s in goodStrings) {
+            val encoded = s.encodeToByteArray()
+            val buf = ArrayBuffer(encoded.size + 3)
+            buf.putBytes(1, encoded)
+            assertDoubleEquals(
+                s.toDouble(),
+                FloatingDecimalParsing.prepareDouble(buf, start = 1, endExclusive = 1 + encoded.size).doubleValue()
+            )
+            assertFloatEquals(
+                s.toFloat(),
+                FloatingDecimalParsing.prepareFloat(buf, start = 1, endExclusive = 1 + encoded.size).floatValue()
+            )
+        }
+    }
+
+    @Test
+    fun testFastPaths() {
+        fun check(v: String, expected: Double) =
+            assertEquals(expected, FloatingDecimalParsing.parseDouble(v))
+
+        /* Exercises the fast paths in FloatingDecimal. */
+        check("1", 1.0)
+        check("2.34000e2", 234.0)
+        check("9.223e18", 9.223e18)
+        check("9.876e18", 9.876e18)
+        check("9223372036854776833", 9.223372036854778E18)
+        check("9223372036854776832", 9.223372036854776E18)
+
+        check("1.23", 1.23)
+        check("0.000234", 2.34E-4)
+        check("3.45e23", 3.45E23)
+        check("576460752303423616e20", 5.764607523034236E37)
+
+        check("1e37", 1.0E37)
+        check("8999e34", 8.999E37)
+        check("0.9999e36", 9.999E35)
+        check("0.9876e37", 9.876E36)
+
+        check("1.2e-200", 1.2E-200)
+        check("2.3e100", 2.3E100)
+        check("1.2000000000000000003e-200", 1.2E-200)
+        check("2.3000000000000000004e100", 2.3E100)
+        check("5.249320425370670463e308", Double.POSITIVE_INFINITY)
+        check("5.2493204253706704633e308", Double.POSITIVE_INFINITY)
+
+        check("1.2e-320", 1.2E-320)
+        check("1.2000000000000000003e-320", 1.2E-320)
+
+        check("2.225073858507201383e-308", Float64Consts.MIN_NORMAL)
+        check("2.2250738585072013831e-308", Float64Consts.MIN_NORMAL)
     }
 }

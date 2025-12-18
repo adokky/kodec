@@ -16,3 +16,11 @@ internal actual fun multiplyHigh(x: Long, y: Long): Long {
 
     return x1 * y1 + z0 + (z1 shr 32)
 }
+
+internal actual fun unsignedMultiplyHigh(x: Long, y: Long): Long {
+    // Compute via multiplyHigh() to leverage the intrinsic
+    var result: Long = multiplyHigh(x, y)
+    result += (y and (x shr 63)) // equivalent to `if (x < 0) result += y;`
+    result += (x and (y shr 63)) // equivalent to `if (y < 0) result += x;`
+    return result
+}

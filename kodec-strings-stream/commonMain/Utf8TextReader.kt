@@ -111,6 +111,9 @@ open class Utf8TextReader(buffer: Buffer = Buffer.Empty): RandomAccessTextReader
     override fun parseFloat(start: Int, end: Int, onFormatError: DecodingErrorHandler<String>): StringToFpConverter =
         buffer.parseFloat(start, end, onFormatError)
 
+    override fun parseDouble(start: Int, end: Int, onFormatError: DecodingErrorHandler<String>): StringToFpConverter =
+        buffer.parseDouble(start, end, onFormatError)
+
     fun startReadingFrom(input: Buffer, position: Int = 0) {
         errorContainer.consumeError()
         this.buffer = input

@@ -260,6 +260,13 @@ abstract class AbstractTextReaderTest {
     }
 
     @Test
+    fun dgdfg() {
+        val n = 1.7976931348623157E308
+        setText(n.toString())
+        assertNearlyEquals(n, reader.readDouble())
+    }
+
+    @Test
     fun doubles() {
         for (n in NumbersDataSet.floats64.filter { it.isFinite() }) {
             enrichMessageOf<Throwable>({ "failed on: $n" }) {
@@ -282,7 +289,7 @@ abstract class AbstractTextReaderTest {
         var ok = false
         reader.readNumberTemplate(
             acceptInt = { assertEquals(n, it); ok = true },
-            acceptFloat = { fail() }
+            acceptDouble = { fail() }
         )
         assertTrue(ok, "acceptInt not called")
     }
@@ -291,7 +298,7 @@ abstract class AbstractTextReaderTest {
         var ok = false
         reader.readNumberTemplate(
             acceptInt = { fail() },
-            acceptFloat = { assertNearlyEquals(n, it.doubleValue()); ok = true }
+            acceptDouble = { assertNearlyEquals(n, it.doubleValue()); ok = true }
         )
         assertTrue(ok, "acceptFloat not called")
     }

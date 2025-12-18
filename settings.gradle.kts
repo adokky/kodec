@@ -7,6 +7,7 @@ pluginManagement {
 
 rootProject.name = "kodec"
 
+include(":benchmarks")
 include(":kodec-binary-num")
 include(":kodec-buffers-core")
 include(":kodec-buffers-data")

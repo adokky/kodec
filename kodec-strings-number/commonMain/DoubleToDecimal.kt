@@ -191,7 +191,7 @@ internal object DoubleToDecimal : ToDecimal() {
             if ((0 < mq) and (mq < P)) {
                 val f = c shr mq
                 if (f shl mq == c) {
-                    return toChars(dst, index, f, 0, exact = true, away = false) - start
+                    return toChars(dst, index, f, 0) - start
                 }
             }
             return toDecimal(dst, index, -mq, c, 0) - start
@@ -277,7 +277,7 @@ internal object DoubleToDecimal : ToDecimal() {
             val wpin = (tp10 shl 2) + out <= vbr
             if (upin != wpin) {
                 /* Exactly one of u' or w' lies in Rv */
-                return toChars(dst, index, if (upin) sp10 else tp10, k, sp10 shl 2 == vb, wpin)
+                return toChars(dst, index, if (upin) sp10 else tp10, k)
             }
         }
 
@@ -295,7 +295,7 @@ internal object DoubleToDecimal : ToDecimal() {
         val win = (t shl 2) + out <= vbr
         if (uin != win) {
             /* Exactly one of u or w lies in Rv */
-            return toChars(dst, index, if (uin) s else t, k + dk, s shl 2 == vb, win)
+            return toChars(dst, index, if (uin) s else t, k + dk)
         }
         /*
          * Both u and w lie in Rv: determine the one closest to v.
@@ -303,16 +303,13 @@ internal object DoubleToDecimal : ToDecimal() {
          */
         val cmp = vb - (s + t shl 1)
         val away = cmp > 0 || cmp == 0L && (s and 0x1L) != 0L
-        return toChars(dst, index, if (away) t else s, k + dk, s shl 2 == vb, away)
+        return toChars(dst, index, if (away) t else s, k + dk)
     }
 
     /*
      * Formats the decimal f 10^e.
      */
-    private fun toChars(
-        dst: MutableBuffer, index: Int, f: Long, e: Int,
-        exact: Boolean, away: Boolean
-    ): Int {
+    private fun toChars(dst: MutableBuffer, index: Int, f: Long, e: Int): Int {
         /*
          * For details not discussed here see section 10 of [1].
          *

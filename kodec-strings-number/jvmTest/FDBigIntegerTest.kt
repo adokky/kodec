@@ -9,52 +9,40 @@ class FDBigIntegerTest {
     private companion object {
         const val MAX_P5 = 413
         const val MAX_P2 = 65
-
-        private const val LONG_SIGN_MASK = (1L shl 63)
-
-        private val FIVE = BigInteger.valueOf(5)
-
-        private val MUTABLE_ZERO: FDBigInteger =
-            FDBigInteger.valueOfPow52(0, 0).leftInplaceSub(FDBigInteger.valueOfPow52(0, 0))
-        private val IMMUTABLE_ZERO: FDBigInteger =
-            FDBigInteger.valueOfPow52(0, 0).leftInplaceSub(FDBigInteger.valueOfPow52(0, 0))
-        private val IMMUTABLE_MILLION: FDBigInteger = genMillion1()
-        private val IMMUTABLE_BILLION: FDBigInteger = genBillion1()
-        private val IMMUTABLE_TEN18: FDBigInteger = genTen18()
-
-        init {
-            IMMUTABLE_ZERO.isImmutable = true
-            IMMUTABLE_MILLION.isImmutable = true
-            IMMUTABLE_BILLION.isImmutable = true
-            IMMUTABLE_TEN18.isImmutable = true
-        }
+        val LONG_SIGN_MASK = (1L shl 63)
+        val FIVE: BigInteger = BigInteger.valueOf(5)
+        val MUTABLE_ZERO = FDBigInteger(0)
+        val IMMUTABLE_ZERO = FDBigInteger(0).makeImmutable()
+        val IMMUTABLE_MILLION = genMillion1().makeImmutable()
+        val IMMUTABLE_TEN18 = genTen18().makeImmutable()
 
         // data.length == 1, nWords == 1, offset == 0
-        private fun genMillion1(): FDBigInteger = FDBigInteger.valueOfPow52(6, 0).leftShift(6)
+        fun genMillion1(): FDBigInteger = FDBigInteger.valueOfPow52(6, 0).leftShift(6)
 
         // data.length == 2, nWords == 1, offset == 0
-        private fun genMillion2(): FDBigInteger = FDBigInteger.valueOfMulPow52(1000000L, 0, 0)
-
-        // data.length == 1, nWords == 1, offset == 0
-        private fun genBillion1(): FDBigInteger = FDBigInteger.valueOfPow52(9, 0).leftShift(9)
+        fun genMillion2(): FDBigInteger = FDBigInteger.valueOfMulPow52(1000000L, 0, 0, FDBigInteger())
 
         // data.length == 2, nWords == 2, offset == 0
-        private fun genTen18(): FDBigInteger = FDBigInteger.valueOfPow52(18, 0).leftShift(18)
+        fun genTen18(): FDBigInteger = FDBigInteger.valueOfPow52(18, 0).leftShift(18)
     }
 
-    private fun mutable(hex: String?, offset: Int): FDBigInteger {
-        val chars: ByteArray = BigInteger(hex, 16).toString().toByteArray(StandardCharsets.US_ASCII)
+    private fun toBigInteger(v: FDBigInteger): BigInteger = BigInteger(v.toByteArray())
+
+    private fun mutable(hex: String, offset: Int): FDBigInteger {
+        val chars = BigInteger(hex, 16).toString().toByteArray(StandardCharsets.US_ASCII)
         return FDBigInteger(0, chars, 0, chars.size).multByPow52(0, offset * 32)
     }
 
     private fun biPow52(p5: Int, p2: Int): BigInteger = FIVE.pow(p5).shiftLeft(p2)
 
+    @Throws(Exception::class)
     private fun check(expected: BigInteger, actual: FDBigInteger, message: String?) {
-        if (expected != actual.toBigInteger()) {
-            throw Exception(message.toString() + " result " + actual.toHexString() + " expected " + expected.toString(16))
+        if (expected != toBigInteger(actual)) {
+            throw Exception(message + " result " + actual + " expected " + expected.toString(16))
         }
     }
 
+    @Throws(Exception::class)
     private fun testValueOfPow52(p5: Int, p2: Int) {
         check(
             biPow52(p5, p2), FDBigInteger.valueOfPow52(p5, p2),
@@ -64,8 +52,8 @@ class FDBigIntegerTest {
 
     @Test
     fun testValueOfPow52() {
-        for (p5 in 0 .. MAX_P5) {
-            for (p2 in 0 .. MAX_P2) {
+        for (p5 in 0..MAX_P5) {
+            for (p2 in 0..MAX_P2) {
                 testValueOfPow52(p5, p2)
             }
         }
@@ -77,7 +65,7 @@ class FDBigIntegerTest {
             bi = bi.setBit(63)
         }
         check(
-            biPow52(p5, p2).multiply(bi), FDBigInteger.valueOfMulPow52(value, p5, p2),
+            biPow52(p5, p2).multiply(bi), FDBigInteger.valueOfMulPow52(value, p5, p2, FDBigInteger()),
             "valueOfMulPow52(" + toHexString(value) + "." + p5 + "," + p2 + ")"
         )
     }
@@ -93,7 +81,7 @@ class FDBigIntegerTest {
 
     @Test
     fun testValueOfMulPow52() {
-        for (p5 in 0 .. MAX_P5) {
+        for (p5 in 0..MAX_P5) {
             testValueOfMulPow52(0xFFFFFFFFL, p5)
             testValueOfMulPow52(0x123456789AL, p5)
             testValueOfMulPow52(0x7FFFFFFFFFFFFFFFL, p5)
@@ -102,8 +90,8 @@ class FDBigIntegerTest {
     }
 
     private fun testLeftShift(t: FDBigInteger, shift: Int, isImmutable: Boolean) {
-        val bt = t.toBigInteger()
-        val r: FDBigInteger = t.leftShift(shift)
+        val bt = toBigInteger(t)
+        val r = t.leftShift(shift)
         if ((bt.signum() == 0 || shift == 0 || !isImmutable) && r != t) {
             throw Exception("leftShift doesn't reuse its argument")
         }
@@ -152,16 +140,15 @@ class FDBigIntegerTest {
         testLeftShift(genMillion2(), 45, false)
     }
 
-    @Suppress("SameParameterValue")
     private fun testQuoRemIteration(t: FDBigInteger, s: FDBigInteger) {
-        val bt = t.toBigInteger()
-        val bs = s.toBigInteger()
-        val q: Int = t.quoRemIteration(s)
-        val qr: Array<BigInteger> = bt.divideAndRemainder(bs)
-        if (!BigInteger.valueOf(q.toLong()).equals(qr[0])) {
+        val bt = toBigInteger(t)
+        val bs = toBigInteger(s)
+        val q = t.quoRemIteration(s)
+        val qr = bt.divideAndRemainder(bs)
+        if (BigInteger.valueOf(q.toLong()) != qr[0]) {
             throw Exception("quoRemIteration returns incorrect quo")
         }
-        check(qr[1].multiply(BigInteger.TEN), t, "quoRemIteration returns incorrect rem")
+        check(qr[1]!!.multiply(BigInteger.TEN), t, "quoRemIteration returns incorrect rem")
     }
 
     @Test
@@ -185,9 +172,9 @@ class FDBigIntegerTest {
     }
 
     private fun testCmp(t: FDBigInteger, o: FDBigInteger) {
-        val bt = t.toBigInteger()
-        val bo = o.toBigInteger()
-        val cmp: Int = t.cmp(o)
+        val bt = toBigInteger(t)
+        val bo = toBigInteger(o)
+        val cmp = t.cmp(o)
         val bcmp = bt.compareTo(bo)
         if (bcmp != cmp) {
             throw Exception("cmp returns $cmp expected $bcmp")
@@ -213,37 +200,36 @@ class FDBigIntegerTest {
         testCmp(mutable("5000000000", 0), mutable("5", 1))
     }
 
-    @Suppress("SameParameterValue")
-    private fun testCmpPow52(t: FDBigInteger, p5: Int, p2: Int) {
-        val o = FDBigInteger.valueOfPow52(p5, p2)
-        val bt = t.toBigInteger()
-        val bo: BigInteger = biPow52(p5, p2)
-        val cmp: Int = t.cmp(o)
+    private fun testCmpPow52(t: FDBigInteger, p2: Int) {
+        val o = FDBigInteger.valueOfPow52(0, p2)
+        val bt = toBigInteger(t)
+        val bo = biPow52(0, p2)
+        val cmp = t.cmp(o)
         val bcmp = bt.compareTo(bo)
         if (bcmp != cmp) {
-            throw Exception("cmpPow52 returns $cmp expected $bcmp")
+            throw Exception("cmp returns $cmp expected $bcmp")
         }
-        check(bt, t, "cmpPow52 corrupts this")
+        check(bt, t, "cmp corrupts this")
         check(bo, o, "cmpPow5 corrupts other")
     }
 
     @Test
     fun testCmpPow52() {
-        testCmpPow52(mutable("00000002", 1), 0, 31)
-        testCmpPow52(mutable("00000002", 1), 0, 32)
-        testCmpPow52(mutable("00000002", 1), 0, 33)
-        testCmpPow52(mutable("00000002", 1), 0, 34)
-        testCmpPow52(mutable("00000002", 1), 0, 64)
-        testCmpPow52(mutable("00000003", 1), 0, 32)
-        testCmpPow52(mutable("00000003", 1), 0, 33)
-        testCmpPow52(mutable("00000003", 1), 0, 34)
+        testCmpPow52(mutable("00000002", 1), 31)
+        testCmpPow52(mutable("00000002", 1), 32)
+        testCmpPow52(mutable("00000002", 1), 33)
+        testCmpPow52(mutable("00000002", 1), 34)
+        testCmpPow52(mutable("00000002", 1), 64)
+        testCmpPow52(mutable("00000003", 1), 32)
+        testCmpPow52(mutable("00000003", 1), 33)
+        testCmpPow52(mutable("00000003", 1), 34)
     }
 
     private fun testAddAndCmp(t: FDBigInteger, x: FDBigInteger, y: FDBigInteger) {
-        val bt = t.toBigInteger()
-        val bx = x.toBigInteger()
-        val by = y.toBigInteger()
-        val cmp: Int = t.addAndCmp(x, y)
+        val bt = toBigInteger(t)
+        val bx = toBigInteger(x)
+        val by = toBigInteger(y)
+        val cmp = t.addAndCmp(x, y)
         val bcmp = bt.compareTo(bx.add(by))
         if (bcmp != cmp) {
             throw Exception("addAndCmp returns $cmp expected $bcmp")
@@ -279,8 +265,8 @@ class FDBigIntegerTest {
     }
 
     private fun testMultBy10(t: FDBigInteger, isImmutable: Boolean) {
-        val bt = t.toBigInteger()
-        val r: FDBigInteger = t.multBy10()
+        val bt = toBigInteger(t)
+        val r = t.multBy10()
         if ((bt.signum() == 0 || !isImmutable) && r != t) {
             throw Exception("multBy10 of doesn't reuse its argument")
         }
@@ -290,131 +276,38 @@ class FDBigIntegerTest {
         check(bt.multiply(BigInteger.TEN), r, "multBy10 returns wrong result")
     }
 
+//    @Ignore // Enable for more comprehensize but slow testing
     @Test
     fun testMultBy10() {
-        for (p5 in 0 .. MAX_P5) {
-            for (p2 in 0 .. MAX_P2) {
+        for (p5 in 0..MAX_P5) {
+            for (p2 in 0..MAX_P2) {
                 // This strange way of creating a value ensures that it is mutable.
-                val value: FDBigInteger = FDBigInteger.valueOfPow52(0, 0).multByPow52(p5, p2)
+                val value = FDBigInteger.valueOfPow52(0, 0).multByPow52(p5, p2)
                 testMultBy10(value, false)
-                value.isImmutable = true
+                value.makeImmutable()
                 testMultBy10(value, true)
             }
         }
     }
 
-
     private fun testMultByPow52(t: FDBigInteger, p5: Int, p2: Int) {
-        val bt = t.toBigInteger()
-        val r: FDBigInteger = t.multByPow52(p5, p2)
+        val bt = toBigInteger(t)
+        val r = t.multByPow52(p5, p2)
         if (bt.signum() == 0 && r != t) {
             throw Exception("multByPow52 of doesn't reuse its argument")
         }
         check(bt.multiply(biPow52(p5, p2)), r, "multByPow52 returns wrong result")
     }
 
+//    @Ignore // Enable for more comprehensize but slow testing
     @Test
     fun testMultByPow52() {
-        for (p5 in 0 .. MAX_P5) {
-            for (p2 in 0 .. MAX_P2) {
+        for (p5 in 0..MAX_P5) {
+            for (p2 in 0..MAX_P2) {
                 // This strange way of creating a value ensures that it is mutable.
-                val value: FDBigInteger = FDBigInteger.valueOfPow52(0, 0).multByPow52(p5, p2)
+                val value = FDBigInteger.valueOfPow52(0, 0).multByPow52(p5, p2)
                 testMultByPow52(value, p5, p2)
             }
         }
-    }
-
-    private fun testLeftInplaceSub(left: FDBigInteger, right: FDBigInteger, isImmutable: Boolean) {
-        val biLeft = left.toBigInteger()
-        val biRight = right.toBigInteger()
-        val diff: FDBigInteger = left.leftInplaceSub(right)
-        if (!isImmutable && diff !== left) {
-            throw Exception("leftInplaceSub of doesn't reuse its argument")
-        }
-        if (isImmutable) {
-            check(biLeft, left, "leftInplaceSub corrupts its left immutable argument")
-        }
-        check(biRight, right, "leftInplaceSub corrupts its right argument")
-        check(biLeft.subtract(biRight), diff, "leftInplaceSub returns wrong result")
-    }
-
-    @Test
-    fun testLeftInplaceSub() {
-        for (p5 in 0 .. MAX_P5)
-        for (p2 in 0 .. MAX_P2)
-        for (p5r in 0 .. p5 step 10)
-        for (p2r in 0 .. p2 step 10) {
-            // This strange way of creating a value ensures that it is mutable.
-            var left = FDBigInteger.valueOfPow52(0, 0).multByPow52(p5, p2)
-            val right = FDBigInteger.valueOfPow52(0, 0).multByPow52(p5r, p2r)
-            testLeftInplaceSub(left, right, false)
-            left = FDBigInteger.valueOfPow52(0, 0).multByPow52(p5, p2)
-            left.isImmutable = true
-            testLeftInplaceSub(left, right, true)
-        }
-    }
-
-    private fun testRightInplaceSub(left: FDBigInteger, right: FDBigInteger, isImmutable: Boolean) {
-        val biLeft = left.toBigInteger()
-        val biRight = right.toBigInteger()
-        val diff: FDBigInteger = left.rightInplaceSub(right)
-        if (!isImmutable && diff !== right) {
-            throw Exception("rightInplaceSub of doesn't reuse its argument")
-        }
-        check(biLeft, left, "leftInplaceSub corrupts its left argument")
-        if (isImmutable) {
-            check(biRight, right, "leftInplaceSub corrupts its right immutable argument")
-        }
-        try {
-            check(biLeft.subtract(biRight), diff, "rightInplaceSub returns wrong result")
-        } catch (e: Exception) {
-            println("$biLeft - $biRight = ${biLeft.subtract(biRight)}")
-            throw e
-        }
-    }
-
-    @Test
-    fun testRightInplaceSub() {
-        for (p5 in 0 .. MAX_P5)
-        for (p2 in 0 .. MAX_P2)
-        for (p5r in 0 .. p5 step 10)
-        for (p2r in 0 .. p2 step 10) {
-            // This strange way of creating a value ensures that it is mutable.
-            val left = FDBigInteger.valueOfPow52(0, 0).multByPow52(p5, p2)
-            var right = FDBigInteger.valueOfPow52(0, 0).multByPow52(p5r, p2r)
-            testRightInplaceSub(left, right, isImmutable = false)
-            right = FDBigInteger.valueOfPow52(0, 0).multByPow52(p5r, p2r)
-            right.isImmutable = true
-            testRightInplaceSub(left, right, isImmutable = true)
-        }
-    }
-
-    private fun FDBigInteger.toBigInteger(): BigInteger {
-        val magnitude = ByteArray(nWords * 4 + 1)
-        for (i in 0 ..< nWords) {
-            val w: Int = data[i]
-            magnitude[magnitude.size - 4 * i - 1] = w.toByte()
-            magnitude[magnitude.size - 4 * i - 2] = (w shr 8).toByte()
-            magnitude[magnitude.size - 4 * i - 3] = (w shr 16).toByte()
-            magnitude[magnitude.size - 4 * i - 4] = (w shr 24).toByte()
-        }
-        return BigInteger(magnitude).shiftLeft(offset * 32)
-    }
-
-    private fun FDBigInteger.toHexString(): String {
-        if (nWords == 0) return "0"
-
-        val sb = StringBuilder((nWords + offset) * 8)
-        for (i in nWords - 1 downTo 0) {
-            val subStr = Integer.toHexString(data[i])
-            for (j in subStr.length .. 7) {
-                sb.append('0')
-            }
-            sb.append(subStr)
-        }
-        for (i in offset downTo 1) {
-            sb.append("00000000")
-        }
-        return sb.toString()
     }
 }

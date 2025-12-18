@@ -98,25 +98,6 @@ object MathUtilsChecker : BasicChecker() {
     }
 
     /**
-     * Returns as a `long` the most significant 64 bits of the unsigned
-     * 128-bit product of two unsigned 64-bit factors.
-     *
-     * @param x the first value
-     * @param y the second value
-     * @return the result
-     * @see .multiplyHigh
-     *
-     * @since 18
-     */
-    fun unsignedMultiplyHigh(x: Long, y: Long): Long {
-        // Compute via multiplyHigh() to leverage the intrinsic
-        var result = Math.multiplyHigh(x, y)
-        result += (y and (x shr 63)) // equivalent to `if (x < 0) result += y;`
-        result += (x and (y shr 63)) // equivalent to `if (y < 0) result += x;`
-        return result
-    }
-
-    /**
      * Returns unsigned `x` raised to the power of `n`,
      * throwing an exception if the result overflows an unsigned `long`.
      * When `n` is 0, the returned value is 1.

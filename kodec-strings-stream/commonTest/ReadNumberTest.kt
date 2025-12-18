@@ -19,7 +19,7 @@ class ReadNumberTest {
         var failure: NumberParsingError? = null
         reader.readNumberTemplate(
             acceptInt = { fail("expected failure but called acceptInt() for input '$input'") },
-            acceptFloat = { fail("expected failure but called acceptFloat() for input '$input'") },
+            acceptDouble = { fail("expected failure but called acceptFloat() for input '$input'") },
             onFail = { failure = it },
             charClasses = DefaultCharClasses.mapper,
             terminatorClass = terminationClasses
@@ -49,7 +49,7 @@ class ReadNumberTest {
         var long: Long? = null
         reader.readNumberTemplate(
             acceptInt = { long = it },
-            acceptFloat = { fail("expected acceptInt() but called acceptFloat() for '$input'") },
+            acceptDouble = { fail("expected acceptInt() but called acceptFloat() for '$input'") },
             charClasses = DefaultCharClasses.mapper,
             terminatorClass = terminationClasses
         )
@@ -63,7 +63,7 @@ class ReadNumberTest {
         assertFalse(result.isDouble)
     }
 
-    private fun checkFloat(
+    private fun checkDouble(
         expected: Double,
         input: String = expected.toString(),
         allowSpecial: Boolean = false,
@@ -73,7 +73,7 @@ class ReadNumberTest {
         var decoded: Double? = null
         reader.readNumberTemplate(
             acceptInt = { fail("expected acceptFloat() but called acceptInt() for '$input'") },
-            acceptFloat = { decoded = it.doubleValue() },
+            acceptDouble = { decoded = it.doubleValue() },
             allowSpecialFp = allowSpecial,
             charClasses = DefaultCharClasses.mapper,
             terminatorClass = terminationClasses
@@ -119,15 +119,15 @@ class ReadNumberTest {
     fun float_happy_path() {
         for (float in NumbersDataSet.floats64) {
             if (!float.isFinite()) continue
-            checkFloat(float)
-            checkFloat(float, "$float ")
-            checkFloat(float, "$float:")
-            checkFloat(float, "$float,")
+            checkDouble(float)
+            checkDouble(float, "$float ")
+            checkDouble(float, "$float:")
+            checkDouble(float, "$float,")
         }
 
-        checkFloat(Double.NEGATIVE_INFINITY, allowSpecial = true)
-        checkFloat(Double.POSITIVE_INFINITY, allowSpecial = true)
-        checkFloat(Double.NaN, allowSpecial = true)
+        checkDouble(Double.NEGATIVE_INFINITY, allowSpecial = true)
+        checkDouble(Double.POSITIVE_INFINITY, allowSpecial = true)
+        checkDouble(Double.NaN, allowSpecial = true)
     }
 
     @Test
@@ -153,8 +153,8 @@ class ReadNumberTest {
 
     @Test
     fun custom_terminator() {
-        checkFloat(123.4556, "123.4556/")
-        checkFloat(123.4556, "123.4556 ", terminationClasses = DefaultCharClasses.WHITESPACE)
+        checkDouble(123.4556, "123.4556/")
+        checkDouble(123.4556, "123.4556 ", terminationClasses = DefaultCharClasses.WHITESPACE)
         checkFails("123.4556/", NumberParsingError.MalformedNumber, DefaultCharClasses.WHITESPACE)
 
         checkInteger(123, "123/")
@@ -230,7 +230,7 @@ class ReadNumberTest {
     fun floats() {
         for (string in floatStrings) {
             enrichMessageOf<Throwable>({ string }) {
-                checkFloat(expected = string.toDouble(), input = string, allowSpecial = true)
+                checkDouble(expected = string.toDouble(), input = string, allowSpecial = true)
             }
         }
     }

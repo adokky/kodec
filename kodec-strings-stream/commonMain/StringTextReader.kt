@@ -75,7 +75,10 @@ open class StringTextReader(input: CharSequence = ""): RandomAccessTextReader() 
         SimpleSubString(input, start, end).also { it.validateRange() }
 
     override fun parseFloat(start: Int, end: Int, onFormatError: DecodingErrorHandler<String>): StringToFpConverter =
-        FloatingDecimalParsing.readString(input, start, end, onFormatError = onFormatError)
+        input.parseFloat(start, end, onFormatError = onFormatError)
+
+    override fun parseDouble(start: Int, end: Int, onFormatError: DecodingErrorHandler<String>): StringToFpConverter =
+        input.parseDouble(start, end, onFormatError = onFormatError)
 
     fun startReadingFrom(input: CharSequence, position: Int = 0) {
         this.input = input

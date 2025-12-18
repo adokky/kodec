@@ -35,6 +35,7 @@ sealed class RandomAccessTextReader: TextReader, AutoCloseable {
     abstract fun readCodePoint(position: Int): CodePointAndSize
 
     abstract fun parseFloat(start: Int, end: Int, onFormatError: DecodingErrorHandler<String> = fail): StringToFpConverter
+    abstract fun parseDouble(start: Int, end: Int, onFormatError: DecodingErrorHandler<String> = fail): StringToFpConverter
 
     /** @see [readAsciiCode] */
     abstract fun readAsciiCode(position: Int): Int
@@ -140,12 +141,34 @@ sealed class RandomAccessTextReader: TextReader, AutoCloseable {
         return nextCodePoint.also { _nextCodePoint = readNextAsciiCode() }
     }
 
-    fun <BDS: BitDescriptors> parseFloat(
+    override fun readFloat(allowSpecialValues: Boolean, onFormatError: DecodingErrorHandler<String>): Float {
+        val start = position
+        val special = skipFpNumber(
+            allowSpecialValues = allowSpecialValues,
+            onFormatError = onFormatError,
+            charClasses = DefaultCharClasses.mapper,
+            terminatorClass = DefaultCharClasses.WORD_TERM
+        )
+        return (special ?: parseFloat(start, end = position, onFormatError = onFormatError)).floatValue()
+    }
+
+    override fun readDouble(allowSpecialValues: Boolean, onFormatError: DecodingErrorHandler<String>): Double {
+        val start = position
+        val special = skipFpNumber(
+            allowSpecialValues = allowSpecialValues,
+            onFormatError = onFormatError,
+            charClasses = DefaultCharClasses.mapper,
+            terminatorClass = DefaultCharClasses.WORD_TERM
+        )
+        return (special ?: parseDouble(start, end = position, onFormatError = onFormatError)).doubleValue()
+    }
+
+    private fun <BDS: BitDescriptors> skipFpNumber(
         allowSpecialValues: Boolean = false,
         onFormatError: DecodingErrorHandler<String> = fail,
         charClasses: CharToClassMapper<BDS>,
-        terminatorClass: Bits32<BDS>,
-    ): StringToFpConverter {
+        terminatorClass: Bits32<BDS>
+    ): StringToFpConverter? {
         val start = position
         var special: StringToFpConverter? = null
 
@@ -159,21 +182,11 @@ sealed class RandomAccessTextReader: TextReader, AutoCloseable {
 
         if (!charClasses.hasClass(nextCodePoint, terminatorClass)) {
             onFormatError("invalid number format")
-            return StringToFpConverter.NaN
+            return StringToFpConverter.NAN
         }
 
-        return special ?: parseFloat(start, end = position, onFormatError)
+        return special
     }
-
-    fun parseFloat(
-        allowSpecialValues: Boolean = false,
-        onFormatError: DecodingErrorHandler<String> = fail
-    ): StringToFpConverter = parseFloat(
-        allowSpecialValues = allowSpecialValues,
-        onFormatError = onFormatError,
-        charClasses = DefaultCharClasses.mapper,
-        terminatorClass = DefaultCharClasses.WORD_TERM,
-    )
 
     private fun tryReadSpecialFpValue(): StringToFpConverter? {
         val negative = trySkip('-')
@@ -196,20 +209,14 @@ sealed class RandomAccessTextReader: TextReader, AutoCloseable {
         }
         fixNextCodePoint()
 
-        return if (negative) StringToFpConverter.NegativeInfinity else StringToFpConverter.PositiveInfinity
+        return if (negative) StringToFpConverter.NEGATIVE_INFINITY else StringToFpConverter.POSITIVE_INFINITY
     }
 
     private fun readNaN(): StringToFpConverter? {
         readCodePoint()
         if (readCodePoint() != 'a'.code || readCodePoint() != 'n'.code) return null
-        return StringToFpConverter.NaN
+        return StringToFpConverter.NAN
     }
-
-    override fun readFloat(allowSpecialValues: Boolean, onFormatError: DecodingErrorHandler<String>): Float =
-        parseFloat(allowSpecialValues = allowSpecialValues, onFormatError = onFormatError).floatValue()
-
-    override fun readDouble(allowSpecialValues: Boolean, onFormatError: DecodingErrorHandler<String>): Double =
-        parseFloat(allowSpecialValues = allowSpecialValues, onFormatError = onFormatError).doubleValue()
 
     final override val fail: DecodingErrorHandler<Any> = DecodingErrorHandler { err ->
         fail(

@@ -16,6 +16,16 @@ internal object Float32Consts {
     const val SIGNIFICAND_WIDTH: Int = 24
 
     /**
+     * Maximum exponent a finite `float` variable may have
+     */
+    const val MAX_EXPONENT: Int = (1 shl (SIZE - SIGNIFICAND_WIDTH - 1)) - 1 // 127
+
+    /**
+     * Minimum exponent a normalized `float` variable may have
+     */
+    const val MIN_EXPONENT: Int = 1 - MAX_EXPONENT // -126
+
+    /**
      * Bias used in representing a `float` exponent.
      */
     const val EXP_BIAS: Int = (1 shl (SIZE - SIGNIFICAND_WIDTH - 1)) - 1 // 127
@@ -34,6 +44,8 @@ internal object Float32Consts {
      * Bit mask to isolate the significand field of a `float`.
      */
     const val SIGNIF_BIT_MASK: Int = (1 shl (SIGNIFICAND_WIDTH - 1)) - 1
+
+    val MIN_NORMAL: Float = Float.fromBits(0x00800000)
 
     const val INFINITY_REP = "Infinity"
     @JvmStatic val INFINITY_REP_ARRAY = INFINITY_REP.encodeToByteArray().asArrayBuffer()
@@ -54,6 +66,16 @@ internal object Float64Consts {
     const val SIGNIFICAND_WIDTH: Int = 53
 
     /**
+     * Maximum exponent a finite `double` variable may have
+     */
+    const val MAX_EXPONENT: Int = (1 shl (Double.SIZE_BITS - SIGNIFICAND_WIDTH - 1)) - 1 // 1023
+
+    /**
+     * Minimum exponent a normalized `double` variable may have
+     */
+    const val MIN_EXPONENT: Int = 1 - MAX_EXPONENT // -1022
+
+    /**
      * Bias used in representing a `double` exponent.
      */
     const val EXP_BIAS: Int = (1 shl (64 - SIGNIFICAND_WIDTH - 1)) - 1 // 1023
@@ -72,4 +94,9 @@ internal object Float64Consts {
      * Bit mask to isolate the significand field of a `double`.
      */
     const val SIGNIF_BIT_MASK: Long = (1L shl (SIGNIFICAND_WIDTH - 1)) - 1
+
+    /**
+     * A constant holding the smallest positive normal value of type `double`, 2^-1022.
+     */
+    val MIN_NORMAL = Double.fromBits(0x0010000000000000L)
 }

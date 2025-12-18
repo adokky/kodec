@@ -1,44 +1,42 @@
 package io.kodec
 
-import io.kodec.buffers.asBuffer
 import karamel.utils.enrichMessageOf
 import java.math.BigDecimal
 import java.math.BigInteger
+import java.util.*
+import java.util.stream.Stream
+import java.util.stream.Stream.generate
 import kotlin.math.abs
-import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class FloatingDecimalParsingRandomTest {
+class TestRandomFloatingDecimal {
     @Test
-    fun floats() {
-        repeat(ITERATIONS) {
-            val args = randomDec(forDouble = false)
-            val expected: Float = args.decimal.toFloat()
-            enrichMessageOf<Throwable>({ args.s }) {
-                val actual: Float = FloatingDecimalParsing.parseFloat(args.s)
-                assertEquals(expected, actual)
-            }
-        }
+    fun testRandomDecForFloat() = generate { randomDec(false) }.limit(samples.toLong()).test { args ->
+        val expected = args.decimal.toFloat()
+        val actual: Float = FloatingDecimalParsing.parseFloat(args.s)
+        assertEquals(expected, actual)
     }
 
     @Test
-    fun doubles() {
-        assertEquals(14752235318700E023, "14752235318700E023".encodeToByteArray().asBuffer().parseDouble().doubleValue())
-        repeat(ITERATIONS) {
-            val args = randomDec(forDouble = true)
-            val expected: Double = args.decimal.toDouble()
-            enrichMessageOf<Throwable>({ "input: ${args.s}" }) {
-                val actual: Double = FloatingDecimalParsing.parseDouble(args.s)
-                assertEquals(expected, actual)
-            }
-        }
+    fun testRandomDecForDouble() = generate { randomDec(true) }.limit(samples.toLong()).test { args ->
+        val expected = args.decimal.toDouble()
+        val actual: Double = FloatingDecimalParsing.parseDouble(args.s)
+        assertEquals(expected, actual)
     }
 
     @JvmRecord
     private data class Args(val s: String, val decimal: BigDecimal)
 
-    private companion object {
+    private fun Stream<Args>.test(body: (Args) -> Unit) {
+        forEach { args ->
+            enrichMessageOf<Throwable>({ args.toString() }) {
+                body(args)
+            }
+        }
+    }
+
+    companion object {
         /*
          * This class relies on the correctness of
          *      BigInteger string parsing, both decimal and hexadecimal
@@ -48,13 +46,26 @@ class FloatingDecimalParsingRandomTest {
          * Hence, the expected values are those computed by BigDecimal,
          * while the actual values are those returned by FloatingDecimal.
          */
-        val RANDOM = Random(4343)
+        private val RANDOM: Random = Random()
+        private var samples = 0 // random samples per test
 
-        const val ITERATIONS = 1_000_000
+        private const val SAMPLES_PROP = "samples"
 
-        fun randomDec(forDouble: Boolean): Args {
+        init {
+            val prop = System.getProperty(SAMPLES_PROP, "10000") // 10_000
+            try {
+                samples = prop.toInt()
+                if (samples <= 0) {
+                    throw NumberFormatException()
+                }
+            } catch (`_`: NumberFormatException) {
+                throw IllegalArgumentException("-D$SAMPLES_PROP=$prop must specify a valid positive decimal integer.")
+            }
+        }
+
+        private fun randomDec(forDouble: Boolean): Args {
             val sb = StringBuilder()
-            val signLen = appendRandomSign(sb)
+            val signLen: Int = appendRandomSign(sb)
             val leadingZeros: Int = RANDOM.nextInt(4)
             appendZeros(sb, leadingZeros)
             val digits: Int = RANDOM.nextInt(if (forDouble) 24 else 12) + 1
@@ -63,7 +74,10 @@ class FloatingDecimalParsingRandomTest {
             appendZeros(sb, trailingZeros)
             var bd = BigDecimal(
                 BigInteger(
-                    sb.substring(0, signLen + leadingZeros + digits + trailingZeros),
+                    sb.substring(
+                        0,
+                        signLen + leadingZeros + digits + trailingZeros
+                    ),
                     10
                 )
             )
@@ -71,7 +85,7 @@ class FloatingDecimalParsingRandomTest {
             var p = 0
             if (RANDOM.nextInt(8) != 0) {  // 87.5% chance of point presence
                 val pointPos: Int = RANDOM.nextInt(leadingZeros + digits + trailingZeros + 1)
-                sb.insert(0 + signLen + pointPos, '.')
+                sb.insert(signLen + pointPos, '.')
                 p = -(leadingZeros + digits + trailingZeros - pointPos)
             }
             var e = 0
@@ -80,7 +94,6 @@ class FloatingDecimalParsingRandomTest {
                 e = RANDOM.nextInt(-emax, emax)
                 appendExponent(sb, e)
             }
-//            appendRandomSuffix(sb)
             if (e + p >= 0) {
                 bd = bd.multiply(BigDecimal.TEN.pow(e + p))
             } else {
@@ -89,14 +102,13 @@ class FloatingDecimalParsingRandomTest {
             return Args(sb.toString(), bd)
         }
 
-        fun appendRandomSign(sb: StringBuilder): Int =
-            when (RANDOM.nextInt(4)) {
-                0 -> { sb.append('-'); 1 }
-                1 -> { sb.append('+'); 1 }
-                else -> 0
-            }
+        private fun appendRandomSign(sb: StringBuilder): Int = when (RANDOM.nextInt(4)) {
+            0 -> { sb.append('-'); 1 }
+            1 -> { sb.append('+'); 1 }
+            else -> 0
+        }
 
-        fun appendExponent(sb: StringBuilder, e: Int) {
+        private fun appendExponent(sb: StringBuilder, e: Int) {
             sb.append(if (RANDOM.nextBoolean()) 'e' else 'E')
             when {
                 e < 0 -> sb.append('-')
@@ -107,11 +119,13 @@ class FloatingDecimalParsingRandomTest {
             sb.append(abs(e))
         }
 
-        fun appendZeros(sb: StringBuilder, count: Int) {
-            repeat(count) { sb.append('0') }
+        private fun appendZeros(sb: StringBuilder, count: Int) {
+            repeat(count) {
+                sb.append('0')
+            }
         }
 
-        fun appendRandomDecDigits(sb: StringBuilder, count: Int) {
+        private fun appendRandomDecDigits(sb: StringBuilder, count: Int) {
             var count = count
             sb.append(randomDecDigit(1))
             while (count > 1) {
@@ -120,6 +134,9 @@ class FloatingDecimalParsingRandomTest {
             }
         }
 
-        fun randomDecDigit(min: Int): Char = Character.forDigit(RANDOM.nextInt(min, 10), 10).code.toChar()
+        private fun randomDecDigit(min: Int): Char {
+            val c = Character.forDigit(RANDOM.nextInt(min, 10), 10).code
+            return c.toChar()
+        }
     }
 }

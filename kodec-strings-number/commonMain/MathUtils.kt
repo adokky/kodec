@@ -1,5 +1,9 @@
 package io.kodec
 
+import karamel.utils.assert
+import kotlin.math.max
+import kotlin.math.min
+
 /**
  * This class exposes package private utilities for other classes.
  * Thus, all methods are assumed to be invoked with correct arguments,
@@ -845,3 +849,80 @@ object MathUtils {
  */
 expect internal fun multiplyHigh(x: Long, y: Long): Long
 
+expect internal fun unsignedMultiplyHigh(x: Long, y: Long): Long
+
+internal fun unsignedMultiplyHighCommon(x: Long, y: Long): Long {
+    // Compute via multiplyHigh() to leverage the intrinsic
+    var result: Long = multiplyHigh(x, y)
+    result += (y and (x shr 63)) // equivalent to `if (x < 0) result += y;`
+    result += (x and (y shr 63)) // equivalent to `if (y < 0) result += x;`
+    return result
+}
+
+/**
+ * Returns a floating-point power of two in the normal range.
+ * No checks are performed on the argument.
+ */
+internal fun primPowerOfTwoD(n: Int): Double {
+    return Double.fromBits((n + Float64Consts.EXP_BIAS).toLong() shl Float64Consts.SIGNIFICAND_WIDTH - 1)
+}
+
+/**
+ * Returns a floating-point power of two in the normal range.
+ */
+internal fun powerOfTwoD(n: Int): Double {
+    assert {n >= Float64Consts.MIN_EXPONENT && n <= Float64Consts.MAX_EXPONENT }
+    return primPowerOfTwoD(n)
+}
+
+/**
+ * Returns `d`  2<sup>`scaleFactor`</sup>
+ * rounded as if performed by a single correctly rounded
+ * floating-point multiply.
+ */
+internal fun scalb(d: Double, scaleFactor: Int): Double {
+    if (scaleFactor > -Float64Consts.EXP_BIAS) {
+        if (scaleFactor <= Float64Consts.EXP_BIAS) {
+            return d * primPowerOfTwoD(scaleFactor)
+        }
+        if (scaleFactor <= 2 * Float64Consts.EXP_BIAS) {
+            return d * primPowerOfTwoD(scaleFactor - Float64Consts.EXP_BIAS) * F_UP
+        }
+        if (scaleFactor < 2 * Float64Consts.EXP_BIAS + Float64Consts.SIGNIFICAND_WIDTH - 1) {
+            return d * primPowerOfTwoD(scaleFactor - 2 * Float64Consts.EXP_BIAS) * F_UP * F_UP
+        }
+        return d * F_UP * F_UP * F_UP
+    }
+    if (scaleFactor > -2 * Float64Consts.EXP_BIAS) {
+        return d * primPowerOfTwoD(scaleFactor + Float64Consts.EXP_BIAS) * F_DOWN
+    }
+    if (scaleFactor > -2 * Float64Consts.EXP_BIAS - Float64Consts.SIGNIFICAND_WIDTH) {
+        return d * primPowerOfTwoD(scaleFactor + 2 * Float64Consts.EXP_BIAS) * F_DOWN * F_DOWN
+    }
+    return d * Double.MIN_VALUE * Double.MIN_VALUE
+}
+
+private const val F_UP = 8.98846567431158E307 // normal, exact, 2^DoubleConsts.EXP_BIAS
+private const val F_DOWN = 1.1125369292536007E-308 // subnormal, exact, 2^-DoubleConsts.EXP_BIAS
+
+internal fun scalb(f: Float, scaleFactor: Int): Float {
+    // magnitude of a power of two so large that scaling a finite
+    // nonzero value by it would be guaranteed to over or
+    // underflow; due to rounding, scaling down takes an
+    // additional power of two which is reflected here
+    var scaleFactor = scaleFactor
+    val MAX_SCALE: Int = Float32Consts.MAX_EXPONENT + -Float32Consts.MIN_EXPONENT +
+            Float32Consts.SIGNIFICAND_WIDTH + 1
+
+    // Make sure scaling factor is in a reasonable range
+    scaleFactor = max(min(scaleFactor, MAX_SCALE), -MAX_SCALE)
+
+    /*
+     * Since + MAX_SCALE for float fits well within the double
+     * exponent range and + float -> double conversion is exact
+     * the multiplication below will be exact. Therefore, the
+     * rounding that occurs when the double product is cast to
+     * float will be the correctly rounded float result.
+     */
+    return (f.toDouble() * powerOfTwoD(scaleFactor)).toFloat()
+}
