@@ -23,11 +23,11 @@ fun DataBuffer.get(structOffset: Int, field: BufferStructField<Short>): Short {
 
 @JvmName("getIntField")
 fun DataBuffer.get(structOffset: Int, field: BufferStructField<Int>): Int =
-    getSizedAsInt32(structOffset + field.offset, sizeInBytes = field.size)
+    getSizedInt32(structOffset + field.offset, sizeInBytes = field.size)
 
 @JvmName("getLongField")
 fun DataBuffer.get(structOffset: Int, field: BufferStructField<Long>): Long =
-    getSizedAsInt64(structOffset + field.offset, sizeInBytes = field.size)
+    getSizedInt64(structOffset + field.offset, sizeInBytes = field.size)
 
 @JvmName("getStringField")
 fun DataBuffer.get(structOffset: Int, field: BufferStructField<String>): String =
@@ -52,11 +52,11 @@ fun DataBuffer.getBackwards(structOffset: Int, field: BufferStructField<Short>):
 
 @JvmName("getIntFieldBackwards")
 fun DataBuffer.getBackwards(structOffset: Int, field: BufferStructField<Int>): Int =
-    getSizedAsInt32(structOffset + field.backwardOffset, sizeInBytes = field.size)
+    getSizedInt32(structOffset + field.backwardOffset, sizeInBytes = field.size)
 
 @JvmName("getLongFieldBackwards")
 fun DataBuffer.getBackwards(structOffset: Int, field: BufferStructField<Long>): Long =
-    getSizedAsInt64(structOffset + field.backwardOffset, sizeInBytes = field.size)
+    getSizedInt64(structOffset + field.backwardOffset, sizeInBytes = field.size)
 
 @JvmName("getStringFieldBackwards")
 fun DataBuffer.getBackwards(structOffset: Int, field: BufferStructField<String>): String =

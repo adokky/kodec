@@ -1,6 +1,6 @@
 package io.kodec.buffers
 
-fun DataBuffer.getSizedAsInt32(pos: Int, sizeInBytes: Int): Int = when(sizeInBytes) {
+fun DataBuffer.getSizedInt32(pos: Int, sizeInBytes: Int): Int = when(sizeInBytes) {
     1 -> get(pos)
     2 -> getUInt16AsInt32(pos)
     3 -> getInt24(pos)
@@ -8,7 +8,7 @@ fun DataBuffer.getSizedAsInt32(pos: Int, sizeInBytes: Int): Int = when(sizeInByt
     else -> wrongSizeInBytes(sizeInBytes, maxSize = 4)
 }
 
-fun DataBuffer.getSizedAsInt64(pos: Int, sizeInBytes: Int): Long = when(sizeInBytes) {
+fun DataBuffer.getSizedInt64(pos: Int, sizeInBytes: Int): Long = when(sizeInBytes) {
     1 -> get(pos).toLong()
     2 -> getUInt16AsInt64(pos)
     3 -> getInt24(pos).toLong()
