@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.quick.publish)
 }
 
-version = "0.5.3"
+version = "0.6.0"
 
 dependencies {
     commonMainImplementation(project(":kodec-strings-common"))

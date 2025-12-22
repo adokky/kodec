@@ -633,7 +633,7 @@ internal class ASCIIToBinaryBuffer: StringToFpConverter {
                 if (i - start <= (if (pt != 0) 1 else 0)) return@main
                 val stop = i // index after the significand
 
-                /* Scan exponent part, optional for dec, mandatory for hex. */
+                /* Scan exponent part */
                 var ep: Long = 0 // exponent, implicitly 0
                 if ((i < end) && (toLowerCase(input[i]) == 'e'.code)) {
                     ++i

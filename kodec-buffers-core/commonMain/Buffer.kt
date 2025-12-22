@@ -25,7 +25,7 @@ interface Buffer {
      * specified [start] (inclusive) and [endExclusive].
      * Any changes in this buffer are reflected in the returned buffer.
      */
-    fun subBuffer(start: Int, endExclusive: Int): Buffer =
+    fun subBuffer(start: Int, endExclusive: Int = size): Buffer =
         SubBufferWrapper(this, start, endExclusive)
 
     fun toByteArray(start: Int = 0, endExclusive: Int = size): ByteArray {
