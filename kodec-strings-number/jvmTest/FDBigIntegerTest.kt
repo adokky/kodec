@@ -28,6 +28,10 @@ class FDBigIntegerTest {
 
     private fun toBigInteger(v: FDBigInteger): BigInteger = BigInteger(v.toByteArray())
 
+    private fun FDBigInteger.multByPow52(e5: Int, e2: Int): FDBigInteger {
+        return multByPow52(e5, e2, dst = FDBigInteger())
+    }
+
     private fun mutable(hex: String, offset: Int): FDBigInteger {
         val chars = BigInteger(hex, 16).toString().toByteArray(StandardCharsets.US_ASCII)
         return FDBigInteger(0, chars, 0, chars.size).multByPow52(0, offset * 32)

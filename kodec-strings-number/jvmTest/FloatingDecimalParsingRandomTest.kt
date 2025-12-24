@@ -25,6 +25,7 @@ class FloatingDecimalParsingRandomTest {
     @Test
     fun doubles() {
         assertEquals(14752235318700E023, "14752235318700E023".encodeToByteArray().asBuffer().parseDouble().doubleValue())
+        assertEquals(5.130262921845E178, "05130262921845000E+163".encodeToByteArray().asBuffer().parseDouble().doubleValue())
         repeat(ITERATIONS) {
             val args = randomDec(forDouble = true)
             val expected: Double = args.decimal.toDouble()

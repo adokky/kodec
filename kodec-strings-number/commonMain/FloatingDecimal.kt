@@ -24,6 +24,8 @@ internal class ASCIIToBinaryBuffer: StringToFpConverter {
     private var n: Int = 0
 
     private val lhs = FDBigInteger()
+    private val rhs = FDBigInteger()
+    private val rhsMult = FDBigInteger()
 
     /* Assumes n ≤ 19 and returns a decimal prefix of f as an unsigned long. */
     private fun toLong(n: Int): Long {
@@ -359,7 +361,8 @@ internal class ASCIIToBinaryBuffer: StringToFpConverter {
          *      ep < 0 ∧ ep < qr:   cr 5^(-ep) 2^(qr-ep) ⋚ f
          */
         val lhs = valueOfMulPow52(cr, maxOf(-ep, 0), maxOf(qr - ep, 0), lhs.makeMutable())
-        val rhs = FDBigInteger(fl, d, m, n).multByPow52(maxOf(ep, 0), maxOf(ep - qr, 0))
+        val rhs = rhs.makeMutable().init(fl, d, m, n)
+            .multByPow52(maxOf(ep, 0), maxOf(ep - qr, 0), dst = rhsMult.makeMutable())
         val cmp = lhs.cmp(rhs)
         v = Double.fromBits(
             when {
@@ -447,7 +450,8 @@ internal class ASCIIToBinaryBuffer: StringToFpConverter {
         val qr: Int = (be - (Float32Consts.EXP_BIAS + Float32Consts.SIGNIFICAND_WIDTH - 1) - (if (be != 0) 1 else 0))
         val cr = 2 * (bits and Float32Consts.SIGNIF_BIT_MASK or (if (be != 0) FloatToDecimal.C_MIN else 0)) + 1
         val lhs = valueOfMulPow52(cr.toLong(), maxOf(-ep, 0), maxOf(qr - ep, 0), lhs.makeMutable())
-        val rhs = FDBigInteger(fl, d, m, n).multByPow52(maxOf(ep, 0), maxOf(ep - qr, 0))
+        val rhs = rhs.makeMutable().init(fl, d, m, n)
+            .multByPow52(maxOf(ep, 0), maxOf(ep - qr, 0), dst = rhsMult.makeMutable())
         val cmp = lhs.cmp(rhs)
         v = Float.fromBits(
             when {

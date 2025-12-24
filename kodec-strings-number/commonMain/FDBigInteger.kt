@@ -9,9 +9,12 @@ import kotlin.math.max
  * A simple big integer package specifically for floating point base conversion.
  */
 internal class FDBigInteger {
+    private var _data: IntArray? = null
     var data: IntArray // value: data[0] is least significant
-    var offset: Int // number of least significant zero padding ints
-    var nWords: Int // data[nWords-1]!=0, all values above are zero
+        get() = _data!!
+        set(value) { _data = value }
+    var offset: Int = 0 // number of least significant zero padding ints
+    var nWords: Int = 0 // data[nWords-1]!=0, all values above are zero
 
     // if nWords==0 -> this FDBigInteger is zero
     private var isImmutable = false
@@ -30,24 +33,28 @@ internal class FDBigInteger {
      * below the least significant element of `data`.
      */
     private constructor(data: IntArray, offset: Int) {
+        this.nWords = data.size
         this.data = data
         this.offset = offset
-        this.nWords = data.size
         trimLeadingZeros()
     }
 
-    private fun setDataSize(size: Int, offset: Int) {
-        assert { data.size >= size }
-        if (size < nWords) data.fill(0, fromIndex = size, toIndex = nWords)
-        nWords = size
+    private fun setDataSize(nWords: Int, offset: Int) {
+        assert { data.size >= nWords }
+        if (nWords < this.nWords) data.fill(0, fromIndex = nWords, toIndex = this.nWords)
+        this.nWords = nWords
         this.offset = offset
         trimLeadingZeros()
+    }
+
+    private fun clearData() {
+        data.fill(0, toIndex = nWords)
     }
 
     private fun initData2(v0: Int, v1: Int, offset: Int): FDBigInteger {
         data[0] = v0
         data[1] = v1
-        setDataSize(size = 2, offset = offset)
+        setDataSize(nWords = 2, offset = offset)
         return this
     }
 
@@ -55,7 +62,7 @@ internal class FDBigInteger {
         data[0] = v0
         data[1] = v1
         data[2] = v2
-        setDataSize(size = 3, offset = offset)
+        setDataSize(nWords = 3, offset = offset)
         return this
     }
 
@@ -64,13 +71,12 @@ internal class FDBigInteger {
         data[1] = v1
         data[2] = v2
         data[3] = v3
-        setDataSize(size = 4, offset = offset)
+        setDataSize(nWords = 4, offset = offset)
         return this
     }
 
     /**
-     * Constructs an [FDBigInteger] from a starting value and some
-     * decimal digits.
+     * Constructs an [FDBigInteger] from a starting value and some decimal digits.
      *
      * @param lValue The starting value.
      * @param digits The decimal digits.
@@ -78,13 +84,22 @@ internal class FDBigInteger {
      * @param nDigits The final index into `digits`.
      */
     constructor(lValue: Long, digits: ByteArray, i: Int, nDigits: Int) {
-        var i = i
+        init(lValue, digits, i, nDigits)
+    }
+
+    fun init(lValue: Long, digits: ByteArray, i: Int, nDigits: Int): FDBigInteger {
         val n = (nDigits + 8) / 9 // estimate size needed: ⌈nDigits / 9⌉
-        data = IntArray(max(n, 2))
+        val nWords1 = max(n, 2)
+        when {
+            _data == null || nWords1 > data.size -> _data = IntArray(size = nWords1)
+            nWords > 2 -> data.fill(0, fromIndex = 2, toIndex = nWords)
+        }
+        nWords = nWords1
+        offset = 0
         data[0] = lValue.toInt() // starting value
         data[1] = (lValue ushr 32).toInt()
-        offset = 0
-        nWords = 2
+
+        var i = i
         val limit = nDigits - 9
         while (i < limit) {
             var v = 0
@@ -102,7 +117,9 @@ internal class FDBigInteger {
             }
             multAdd(factor, v)
         }
+
         trimLeadingZeros()
+        return this
     }
 
     constructor(v: Long) : this(intArrayOf(v.toInt(), (v ushr 32).toInt()), 0)
@@ -315,34 +332,36 @@ internal class FDBigInteger {
     }
 
     /**
-     * Multiplies this [FDBigInteger] by
-     * 5<sup>`e5`</sup> * 2<sup>`e2`</sup>. The operation will be
+     * Multiplies this [FDBigInteger] by `5^e5 * 2^e2`. The operation will be
      * performed in place if possible, otherwise a new [FDBigInteger]
      * will be returned.
      *
      * @param e5 The exponent of the power-of-five factor.
      * @param e2 The exponent of the power-of-two factor.
-     * @return The multiplication result.
      */
-    fun multByPow52(e5: Int, e2: Int): FDBigInteger {
+    fun multByPow52(e5: Int, e2: Int, dst: FDBigInteger): FDBigInteger {
+        assert { !isImmutable }
+        assert { dst !== this }
         if (nWords == 0) return this
         var res = this
         if (e5 != 0) {
-            val r: IntArray?
+            dst.clearData()
             val extraSize = if (e2 != 0) 1 else 0 // accounts for e2 % 32 shift bits
             if (e5 < SMALL_5_POW.size) {
-                r = IntArray(nWords + 1 + extraSize)
-                mult(data, nWords, SMALL_5_POW[e5], r)
+                dst.nWords = nWords + 1 + extraSize
+                mult(data, nWords, SMALL_5_POW[e5], dst.data)
             } else if (e5 < LONG_5_POW.size) {
                 val pow5 = LONG_5_POW[e5]
-                r = IntArray(nWords + 2 + extraSize)
-                mult(data, nWords, pow5.toInt(), (pow5 ushr 32).toInt(), r)
+                dst.nWords = nWords + 2 + extraSize
+                mult(data, nWords, pow5.toInt(), (pow5 ushr 32).toInt(), dst.data)
             } else {
                 val pow5 = pow5(e5)
-                r = IntArray(nWords + pow5.nWords + extraSize)
-                mult(data, nWords, pow5.data, pow5.nWords, r)
+                dst.nWords = nWords + pow5.nWords + extraSize
+                mult(data, nWords, pow5.data, pow5.nWords, dst.data)
             }
-            res = FDBigInteger(r, offset)
+            dst.offset = offset
+            dst.trimLeadingZeros()
+            res = dst
         }
         return res.leftShift(e2)
     }
@@ -687,7 +706,7 @@ internal class FDBigInteger {
                     dataSize = pow5.nWords + 2 + (if (e2 != 0) 1 else 0)
                     mult(pow5.data, pow5.nWords, v0, v1, dst = dst.data)
                 }
-                dst.setDataSize(size = dataSize, offset = 0)
+                dst.setDataSize(nWords = dataSize, offset = 0)
                 return dst.leftShift(e2)
             }
             if (e2 != 0) return when (bitcount) {
@@ -916,7 +935,7 @@ internal class FDBigInteger {
             return p5
         }
 
-        private val DATA_MAX_INIIAL_SIZE = pow5(2 - DoubleToDecimal.Q_MIN).data.size
+        private val DATA_MAX_INIIAL_SIZE = pow5(2 - DoubleToDecimal.Q_MIN).nWords + 3
     }
 }
 
