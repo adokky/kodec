@@ -528,14 +528,14 @@ internal class FDBigInteger {
 
     /**
      * Multiplies a [FDBigInteger] by an int and adds another int. The
-     * result is computed in place. This method is intended only to be invoked
-     * from [].
+     * result is computed in place.
      *
      * @param iv The factor by which to multiply this [FDBigInteger].
      * @param addend The value to add to the product of this
      * [FDBigInteger] and `iv`.
      */
     private fun multAdd(iv: Int, addend: Int) {
+        assert { !isImmutable }
         val v = iv.toLong() and LONG_MASK
         // unroll 0th iteration, doing addition.
         var p = v * (data[0].toLong() and LONG_MASK) + (addend.toLong() and LONG_MASK)

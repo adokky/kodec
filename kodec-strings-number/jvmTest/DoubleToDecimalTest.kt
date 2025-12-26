@@ -101,17 +101,14 @@ class DoubleToDecimalTest: BasicChecker() {
 
     /*
      * There are tons of doubles that are rendered incorrectly by older JDKs.
-     * While the renderings correctly round back to the original value,
-     * they are longer than needed or are not the closest decimal to the double.
-     * Here are just a very few examples.
      */
     private val anomalies = arrayOf<String?>(
-        /* Older JDKs render these with 18 digits! */"2.82879384806159E17", "1.387364135037754E18",
-        "1.45800632428665E17",  /* Older JDKs render these longer than needed */
+        "2.82879384806159E17", "1.387364135037754E18",
+        "1.45800632428665E17",
 
         "1.6E-322", "6.3E-322",
         "7.3879E20", "2.0E23", "7.0E22", "9.2E22",
-        "9.5E21", "3.1E22", "5.63E21", "8.41E21",  /* Older JDKs do not render these as the closest */
+        "9.5E21", "3.1E22", "5.63E21", "8.41E21",
 
         "9.9E-324", "9.9E-323",
         "1.9400994884341945E25", "3.6131332396758635E25",

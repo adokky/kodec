@@ -2,9 +2,9 @@ package io.kodec
 
 import kotlinx.benchmark.*
 
-@Warmup(200, time = 200, timeUnit = BenchmarkTimeUnit.MILLISECONDS)
 @BenchmarkMode(Mode.Throughput)
-@Measurement(1000, time = 100, timeUnit = BenchmarkTimeUnit.MILLISECONDS)
+@Warmup(15, time = 1000, timeUnit = BenchmarkTimeUnit.MILLISECONDS)
+@Measurement(15, time = 1000, timeUnit = BenchmarkTimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
 class FpParsingBenchmark {
     val data = FpNumbersTestData.loadFromResource("fp-numbers.bin")
