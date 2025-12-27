@@ -19,6 +19,10 @@ mavenPublishing {
     }
 }
 
+sourceSets.jvmMain.configure {
+    java.setSrcDirs(listOf("jvmMain"))
+}
+
 val jvm21Main by sourceSets.creating {
     java.setSrcDirs(listOf("jvm21Main"))
     resources.setSrcDirs(listOf("jvm21MainRes"))
