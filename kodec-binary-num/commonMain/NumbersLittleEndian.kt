@@ -107,7 +107,7 @@ object NumbersLittleEndian {
     }
 
     inline fun writeInt24(v: Int, writeByte: (Int) -> Unit): Int {
-        NumbersCommon.checkInt24Range(v)
+        NumbersCommon.requireInt24Range(v)
         return writeInt24Unsafe(v, writeByte)
     }
 
@@ -115,7 +115,7 @@ object NumbersLittleEndian {
      * @param v *binary* representation of 24-bit unsigned integer in which all 8 left bits must be zero.
      */
     inline fun writeUInt24(v: Int, writeByte: (Int) -> Unit): Int {
-        NumbersCommon.checkUInt24Range(v)
+        NumbersCommon.requireUInt24Range(v)
         return writeInt24Unsafe(v, writeByte)
     }
 
@@ -137,7 +137,7 @@ object NumbersLittleEndian {
     }
 
     inline fun writeInt40(v: Long, writeByte: (Int) -> Unit): Int {
-        NumbersCommon.checkInt40Range(v)
+        NumbersCommon.requireInt40Range(v)
         return writeInt40Unsafe(v, writeByte)
     }
 
@@ -145,7 +145,7 @@ object NumbersLittleEndian {
      * @param v *binary* representation of 40-bit unsigned integer in which all 24 left bits must be zero.
      */
     inline fun writeUInt40(v: Long, writeByte: (Int) -> Unit): Int {
-        NumbersCommon.checkUInt40Range(v)
+        NumbersCommon.requireUInt40Range(v)
         return writeInt40Unsafe(v, writeByte)
     }
 
@@ -160,7 +160,7 @@ object NumbersLittleEndian {
     }
 
     inline fun writeInt48(v: Long, writeByte: (Int) -> Unit): Int {
-        NumbersCommon.checkInt48Range(v)
+        NumbersCommon.requireInt48Range(v)
         return writeInt48Unsafe(v, writeByte)
     }
 
@@ -168,7 +168,7 @@ object NumbersLittleEndian {
      * @param v *binary* representation of 48-bit unsigned integer in which all 16 left bits must be zero.
      */
     inline fun writeUInt48(v: Long, writeByte: (Int) -> Unit): Int {
-        NumbersCommon.checkUInt48Range(v)
+        NumbersCommon.requireUInt48Range(v)
         return writeInt48Unsafe(v, writeByte)
     }
 
@@ -184,7 +184,7 @@ object NumbersLittleEndian {
     }
 
     inline fun writeInt56(v: Long, writeByte: (Int) -> Unit): Int {
-        NumbersCommon.checkInt56Range(v)
+        NumbersCommon.requireInt56Range(v)
         return writeInt56Unsafe(v, writeByte)
     }
 
@@ -192,7 +192,7 @@ object NumbersLittleEndian {
      * @param v *binary* representation of 56-bit unsigned integer in which all 8 left bits must be zero.
      */
     inline fun writeUInt56(v: Long, writeByte: (Int) -> Unit): Int {
-        NumbersCommon.checkUInt56Range(v)
+        NumbersCommon.requireUInt56Range(v)
         return writeInt56Unsafe(v, writeByte)
     }
 
@@ -312,7 +312,7 @@ object NumbersLittleEndian {
     }
 
     inline fun putInt24(v: Int, putByte: (pos: Int, value: Int) -> Unit): Int {
-        NumbersCommon.checkInt24Range(v)
+        NumbersCommon.requireInt24Range(v)
         return putInt24Unsafe(v, putByte)
     }
 
@@ -320,7 +320,7 @@ object NumbersLittleEndian {
      * @param v *binary* representation of 24-bit unsigned integer in which all 8 left bits must be zero.
      */
     inline fun putUInt24(v: Int, putByte: (pos: Int, value: Int) -> Unit): Int {
-        NumbersCommon.checkUInt24Range(v)
+        NumbersCommon.requireUInt24Range(v)
         return putInt24Unsafe(v, putByte)
     }
 
@@ -342,7 +342,7 @@ object NumbersLittleEndian {
     }
 
     inline fun putInt40(v: Long, putByte: (pos: Int, value: Int) -> Unit): Int {
-        NumbersCommon.checkInt40Range(v)
+        NumbersCommon.requireInt40Range(v)
         return putInt40Unsafe(v, putByte)
     }
 
@@ -350,7 +350,7 @@ object NumbersLittleEndian {
      * @param v *binary* representation of 40-bit unsigned integer in which all 24 left bits must be zero.
      */
     inline fun putUInt40(v: Long, putByte: (pos: Int, value: Int) -> Unit): Int {
-        NumbersCommon.checkUInt40Range(v)
+        NumbersCommon.requireUInt40Range(v)
         return putInt40Unsafe(v, putByte)
     }
 
@@ -365,7 +365,7 @@ object NumbersLittleEndian {
     }
 
     inline fun putInt48(v: Long, putByte: (pos: Int, value: Int) -> Unit): Int {
-        NumbersCommon.checkInt48Range(v)
+        NumbersCommon.requireInt48Range(v)
         return putInt48Unsafe(v, putByte)
     }
 
@@ -373,7 +373,7 @@ object NumbersLittleEndian {
      * @param v *binary* representation of 48-bit unsigned integer in which all 16 left bits must be zero.
      */
     inline fun putUInt48(v: Long, putByte: (pos: Int, value: Int) -> Unit): Int {
-        NumbersCommon.checkUInt48Range(v)
+        NumbersCommon.requireUInt48Range(v)
         return putInt48Unsafe(v, putByte)
     }
 
@@ -389,7 +389,7 @@ object NumbersLittleEndian {
     }
 
     inline fun putInt56(v: Long, putByte: (pos: Int, value: Int) -> Unit): Int {
-        NumbersCommon.checkInt56Range(v)
+        NumbersCommon.requireInt56Range(v)
         return putInt56Unsafe(v, putByte)
     }
 
@@ -397,7 +397,7 @@ object NumbersLittleEndian {
      * @param v *binary* representation of 56-bit unsigned integer in which all 8 left bits must be zero.
      */
     inline fun putUInt56(v: Long, putByte: (pos: Int, value: Int) -> Unit): Int {
-        NumbersCommon.checkUInt56Range(v)
+        NumbersCommon.requireUInt56Range(v)
         return putInt56Unsafe(v, putByte)
     }
 

@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.quick.publish)
 }
 
-version = "1.1"
+version = "2.0"
 
 dependencies {
     commonTestImplementation(project(":kodec-testing"))

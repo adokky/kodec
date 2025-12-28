@@ -1,46 +1,46 @@
 package io.kodec
 
-@PublishedApi
-internal object NumbersCommon {
-    fun checkUInt24Range(v: Int) {
+
+object NumbersCommon {
+    fun requireUInt24Range(v: Int) {
         if (v ushr 24 != 0) valueIsOutOfRange(v, 0, UINT_24_MAX)
     }
 
-    fun checkUInt40Range(v: Long) {
+    fun requireUInt40Range(v: Long) {
         if (v ushr 40 != 0L) valueIsOutOfRange(v, 0, UINT_40_MAX)
     }
 
-    fun checkUInt48Range(v: Long) {
+    fun requireUInt48Range(v: Long) {
         if (v ushr 48 != 0L) valueIsOutOfRange(v, 0, UINT_48_MAX)
     }
 
-    fun checkUInt56Range(v: Long) {
+    fun requireUInt56Range(v: Long) {
         if (v ushr 56 != 0L) valueIsOutOfRange(v, 0, UINT_56_MAX)
     }
 
 
-    fun checkInt24Range(v: Int) {
+    fun requireInt24Range(v: Int) {
         if (v !in INT_24_MIN..INT_24_MAX) valueIsOutOfRange(v, INT_24_MIN, INT_24_MAX)
     }
 
-    fun checkInt40Range(v: Long) {
+    fun requireInt40Range(v: Long) {
         if (v !in INT_40_MIN..INT_40_MAX) valueIsOutOfRange(v, INT_40_MIN, INT_40_MAX)
     }
 
-    fun checkInt48Range(v: Long) {
+    fun requireInt48Range(v: Long) {
         if (v !in INT_48_MIN..INT_48_MAX) valueIsOutOfRange(v, INT_48_MIN, INT_48_MAX)
     }
 
-    fun checkInt56Range(v: Long) {
+    fun requireInt56Range(v: Long) {
         if (v !in INT_56_MIN..INT_56_MAX) valueIsOutOfRange(v, INT_56_MIN, INT_56_MAX)
     }
 
 
-    fun valueIsOutOfRange(v: Long, min: Long, max: Long): Nothing {
+    internal fun valueIsOutOfRange(v: Long, min: Long, max: Long): Nothing {
         throw IllegalArgumentException("value $v is out of range $min..$max")
     }
 
-    fun valueIsOutOfRange(v: Int, min: Int, max: Int): Nothing {
+    internal fun valueIsOutOfRange(v: Int, min: Int, max: Int): Nothing {
         valueIsOutOfRange(v.toLong(), min.toLong(), max.toLong())
     }
 
@@ -55,8 +55,8 @@ internal object NumbersCommon {
     const val INT_48_MAX: Long = 0L.inv() ushr 17
     const val INT_56_MAX: Long = 0L.inv() ushr 9
 
-    const val INT_24_MIN: Int = 0.inv() shl 23
-    const val INT_40_MIN: Long = 1L.inv() shl 39
-    const val INT_48_MIN: Long = 1L.inv() shl 47
-    const val INT_56_MIN: Long = 1L.inv() shl 55
+    const val INT_24_MIN: Int = INT_24_MAX.inv()
+    const val INT_40_MIN: Long = INT_40_MAX.inv()
+    const val INT_48_MIN: Long = INT_48_MAX.inv()
+    const val INT_56_MIN: Long = INT_56_MAX.inv()
 }
