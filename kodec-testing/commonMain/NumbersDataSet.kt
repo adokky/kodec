@@ -1,5 +1,17 @@
 package io.kodec
 
+import io.kodec.NumbersCommon.INT_24_MAX
+import io.kodec.NumbersCommon.INT_24_MIN
+import io.kodec.NumbersCommon.INT_40_MAX
+import io.kodec.NumbersCommon.INT_40_MIN
+import io.kodec.NumbersCommon.INT_48_MAX
+import io.kodec.NumbersCommon.INT_48_MIN
+import io.kodec.NumbersCommon.INT_56_MAX
+import io.kodec.NumbersCommon.INT_56_MIN
+import io.kodec.NumbersCommon.UINT_24_MAX
+import io.kodec.NumbersCommon.UINT_40_MAX
+import io.kodec.NumbersCommon.UINT_48_MAX
+import io.kodec.NumbersCommon.UINT_56_MAX
 import karamel.utils.asInt
 
 object NumbersDataSet {
@@ -56,31 +68,37 @@ object NumbersDataSet {
 
     // partial ints
 
-    val ints24: IntArray  = ints32.map { (it shl 8) shr  8 }.distinct().toIntArray()
-    val uints24: IntArray = ints32.map { (it shl 8) ushr 8 }.distinct().toIntArray()
+    val ints24: IntArray  = ints32.map { (it shl 8) shr  8 }
+        .plus(INT_24_MAX).plus(INT_24_MIN)
+        .plus(INT_24_MAX - 1).plus(INT_24_MIN + 1)
+        .distinct().toIntArray()
+    val uints24: IntArray = ints32.map { (it shl 8) ushr 8 }
+        .plus(UINT_24_MAX)
+        .plus(UINT_24_MAX - 1)
+        .distinct().toIntArray()
 
-    private fun smallLongs(bits: Int): LongArray {
+    private fun smallLongs(bits: Int, vararg extra: Long): LongArray {
         val tail = 64 - bits
-        return ints64.map { (it shl tail) shr tail }.distinct().toLongArray()
+        return ints64.map { (it shl tail) shr tail }.plus(extra.toList()).distinct().toLongArray()
     }
 
-    private fun ulongs(bits: Int): LongArray {
+    private fun ulongs(bits: Int, vararg extra: Long): LongArray {
         val tail = 64 - bits
-        return ints64.map { (it shl tail) ushr tail }.distinct().toLongArray()
+        return ints64.map { (it shl tail) ushr tail }.plus(extra.toList()).distinct().toLongArray()
     }
 
-    val ints40: LongArray = smallLongs(40)
-    val ints48: LongArray = smallLongs(48)
-    val ints56: LongArray = smallLongs(56)
+    val ints40: LongArray = smallLongs(40, INT_40_MIN, INT_40_MAX, INT_40_MIN + 1, INT_40_MAX - 1)
+    val ints48: LongArray = smallLongs(48, INT_48_MIN, INT_48_MAX, INT_48_MIN + 1, INT_48_MAX - 1)
+    val ints56: LongArray = smallLongs(56, INT_56_MIN, INT_56_MAX, INT_56_MIN + 1, INT_56_MAX - 1)
 
-    val uints40: LongArray = ulongs(40)
-    val uints48: LongArray = ulongs(48)
-    val uints56: LongArray = ulongs(56)
+    val uints40: LongArray = ulongs(40, UINT_40_MAX, UINT_40_MAX - 1)
+    val uints48: LongArray = ulongs(48, UINT_48_MAX, UINT_48_MAX - 1)
+    val uints56: LongArray = ulongs(56, UINT_56_MAX, UINT_56_MAX - 1)
 
     // floats
 
-    val floats32 = getFloat32()
-    val floats64 = getFloat64()
+    val floats32: FloatArray = getFloat32()
+    val floats64: DoubleArray = getFloat64()
 
     fun getFloat32(
         max: Int = 1000,
