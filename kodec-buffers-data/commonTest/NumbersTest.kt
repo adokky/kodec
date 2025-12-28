@@ -4,7 +4,7 @@ import io.kodec.NumbersDataSet
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
-class NumbersTest: AbstractDataBufferTest() {
+open class NumbersTest: AbstractDataBufferTest() {
     @Test
     fun int8() = test(
         { NumbersDataSet.ints8.asSequence() },

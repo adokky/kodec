@@ -76,8 +76,8 @@ abstract class AbstractDataBufferTest {
                                 append("failed on byteOrder=${buffer.byteOrder}")
                                 append("\nvalue: '$expected'")
                                 append(
-                                    if (nonZeroRange.isEmpty())
-                                        "\nbuffer is zero" else
+                                    if (nonZeroRange.isEmpty() || nonZeroRange.start < 0)
+                                        "\nbuffer is empty" else
                                         "\nbuffer[$nonZeroRange]: ${
                                             buffer.array.sliceArray(nonZeroRange).contentToString()
                                         }"

@@ -1,6 +1,6 @@
 package io.kodec.buffers
 
-import io.kodec.*
+import io.kodec.NumbersLittleEndian
 import karamel.utils.IndexOutOfBoundsException
 import karamel.utils.asInt
 import kotlin.jvm.JvmField
@@ -68,6 +68,8 @@ open class ArrayDataBuffer internal constructor(
     }
 }
 
+fun dataBufferOf(vararg bytes: Byte): ArrayDataBuffer = bytes.asDataBuffer()
+
 fun ArrayDataBuffer(
     size: Int,
     byteOrder: ByteOrder = ByteOrder.Native,
@@ -84,16 +86,21 @@ fun ByteArray.asDataBuffer(
     byteOrder: ByteOrder = ByteOrder.Native,
     rangeChecks: Boolean = ArrayBuffer.isRangeChacksEnabled
 ): ArrayDataBuffer = when(byteOrder) {
-    ByteOrder.BigEndian -> when {
-        rangeChecks -> ArrayDataBufferSafeBE(this, start, endExclusive)
-        else -> ArrayDataBufferUnsafeBE(this, start, endExclusive)
-    }
-    ByteOrder.LittleEndian -> when {
-        rangeChecks -> ArrayDataBufferSafeLE(this, start, endExclusive)
-        else -> ArrayDataBuffer(this, start, endExclusive)
-    }
+    ByteOrder.BigEndian -> createDataBufferBE(this, start, endExclusive, rangeChecks)
+    ByteOrder.LittleEndian -> createDataBufferLE(this, start, endExclusive, rangeChecks)
     ByteOrder.Native -> asDataBuffer(start, endExclusive, byteOrder = NativeByteOrder, rangeChecks)
 }
 
-fun dataBufferOf(vararg bytes: Byte): ArrayDataBuffer = bytes.asDataBuffer()
+internal expect fun createDataBufferBE(
+    array: ByteArray,
+    start: Int,
+    endExclusive: Int,
+    rangeChecks: Boolean
+): ArrayDataBuffer
 
+internal expect fun createDataBufferLE(
+    array: ByteArray,
+    start: Int,
+    endExclusive: Int,
+    rangeChecks: Boolean
+): ArrayDataBuffer
